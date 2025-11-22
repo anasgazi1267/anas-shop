@@ -88,6 +88,86 @@ export type Database = {
           },
         ]
       }
+      delivery_settings: {
+        Row: {
+          free_delivery_threshold: number | null
+          id: string
+          inside_dhaka_charge: number
+          outside_dhaka_charge: number
+          updated_at: string | null
+        }
+        Insert: {
+          free_delivery_threshold?: number | null
+          id?: string
+          inside_dhaka_charge?: number
+          outside_dhaka_charge?: number
+          updated_at?: string | null
+        }
+        Update: {
+          free_delivery_threshold?: number | null
+          id?: string
+          inside_dhaka_charge?: number
+          outside_dhaka_charge?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      districts: {
+        Row: {
+          created_at: string | null
+          division_id: string
+          id: string
+          is_dhaka: boolean | null
+          name_bn: string
+          name_en: string
+        }
+        Insert: {
+          created_at?: string | null
+          division_id: string
+          id?: string
+          is_dhaka?: boolean | null
+          name_bn: string
+          name_en: string
+        }
+        Update: {
+          created_at?: string | null
+          division_id?: string
+          id?: string
+          is_dhaka?: boolean | null
+          name_bn?: string
+          name_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      divisions: {
+        Row: {
+          created_at: string | null
+          id: string
+          name_bn: string
+          name_en: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name_bn: string
+          name_en: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name_bn?: string
+          name_en?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           advance_amount: number | null
@@ -95,6 +175,9 @@ export type Database = {
           customer_address: string
           customer_name: string
           customer_phone: string
+          delivery_charge: number | null
+          district_id: string | null
+          division_id: string | null
           id: string
           notes: string | null
           payment_method: string | null
@@ -111,6 +194,9 @@ export type Database = {
           customer_address: string
           customer_name: string
           customer_phone: string
+          delivery_charge?: number | null
+          district_id?: string | null
+          division_id?: string | null
           id?: string
           notes?: string | null
           payment_method?: string | null
@@ -127,6 +213,9 @@ export type Database = {
           customer_address?: string
           customer_name?: string
           customer_phone?: string
+          delivery_charge?: number | null
+          district_id?: string | null
+          division_id?: string | null
           id?: string
           notes?: string | null
           payment_method?: string | null
@@ -137,7 +226,22 @@ export type Database = {
           transaction_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_requests: {
         Row: {
@@ -258,15 +362,43 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       generate_tracking_id: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -393,6 +525,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
