@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Copy, CreditCard } from 'lucide-react';
+import { Copy, CreditCard, Truck } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -21,16 +23,43 @@ interface Product {
   advance_amount: number | null;
 }
 
+interface Division {
+  id: string;
+  name_en: string;
+  name_bn: string;
+}
+
+interface District {
+  id: string;
+  division_id: string;
+  name_en: string;
+  name_bn: string;
+  is_dhaka: boolean;
+}
+
+interface DeliverySettings {
+  inside_dhaka_charge: number;
+  outside_dhaka_charge: number;
+  free_delivery_threshold: number;
+}
+
 export default function OrderForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const [product, setProduct] = useState<Product | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
+  const [deliverySettings, setDeliverySettings] = useState<DeliverySettings | null>(null);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_phone: '',
     customer_address: '',
+    division_id: '',
+    district_id: '',
     transaction_id: '',
     notes: '',
   });
@@ -40,8 +69,40 @@ export default function OrderForm() {
     if (id) {
       fetchProduct();
       fetchSettings();
+      fetchDivisions();
+      fetchDistricts();
+      fetchDeliverySettings();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (formData.division_id) {
+      const filtered = districts.filter(d => d.division_id === formData.division_id);
+      setFilteredDistricts(filtered);
+      setFormData({ ...formData, district_id: '' });
+    }
+  }, [formData.division_id, districts]);
+
+  useEffect(() => {
+    if (formData.district_id && deliverySettings) {
+      const selectedDistrict = districts.find(d => d.id === formData.district_id);
+      if (selectedDistrict) {
+        const charge = selectedDistrict.is_dhaka 
+          ? deliverySettings.inside_dhaka_charge 
+          : deliverySettings.outside_dhaka_charge;
+        
+        const productPrice = product?.discount_price || product?.price || 0;
+        
+        // Check if free delivery threshold is met
+        if (deliverySettings.free_delivery_threshold > 0 && 
+            productPrice >= deliverySettings.free_delivery_threshold) {
+          setDeliveryCharge(0);
+        } else {
+          setDeliveryCharge(charge);
+        }
+      }
+    }
+  }, [formData.district_id, deliverySettings, districts, product]);
 
   const fetchProduct = async () => {
     const { data, error } = await supabase
@@ -69,6 +130,40 @@ export default function OrderForm() {
     }
   };
 
+  const fetchDivisions = async () => {
+    const { data, error } = await supabase
+      .from('divisions')
+      .select('*')
+      .order('name_en');
+    if (!error && data) {
+      setDivisions(data);
+    }
+  };
+
+  const fetchDistricts = async () => {
+    const { data, error } = await supabase
+      .from('districts')
+      .select('*')
+      .order('name_en');
+    if (!error && data) {
+      setDistricts(data);
+    }
+  };
+
+  const fetchDeliverySettings = async () => {
+    const { data, error } = await supabase
+      .from('delivery_settings')
+      .select('*')
+      .single();
+    if (!error && data) {
+      setDeliverySettings({
+        inside_dhaka_charge: Number(data.inside_dhaka_charge),
+        outside_dhaka_charge: Number(data.outside_dhaka_charge),
+        free_delivery_threshold: Number(data.free_delivery_threshold),
+      });
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success(t('Copied to clipboard!', 'ক্লিপবোর্ডে কপি হয়েছে!'));
@@ -77,7 +172,8 @@ export default function OrderForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.customer_name || !formData.customer_phone || !formData.customer_address) {
+    if (!formData.customer_name || !formData.customer_phone || !formData.customer_address || 
+        !formData.division_id || !formData.district_id) {
       toast.error(t('Please fill all required fields', 'সকল প্রয়োজনীয় ক্ষেত্র পূরণ করুন'));
       return;
     }
@@ -92,6 +188,7 @@ export default function OrderForm() {
     setLoading(true);
 
     const displayPrice = product?.discount_price || product?.price || 0;
+    const totalAmount = displayPrice + deliveryCharge;
     const trackingIdResult = await supabase.rpc('generate_tracking_id');
     
     const orderData = {
@@ -99,8 +196,11 @@ export default function OrderForm() {
       customer_name: formData.customer_name,
       customer_phone: formData.customer_phone,
       customer_address: formData.customer_address,
+      division_id: formData.division_id,
+      district_id: formData.district_id,
       product_ids: [id],
-      total_amount: displayPrice,
+      total_amount: totalAmount,
+      delivery_charge: deliveryCharge,
       advance_amount: product?.is_advance_payment ? product.advance_amount : null,
       transaction_id: formData.transaction_id || null,
       payment_method: product?.is_advance_payment ? 'advance' : 'cod',
@@ -205,9 +305,7 @@ export default function OrderForm() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('Full Name', 'পুরো নাম')} *
-                  </label>
+                  <Label>{t('Full Name', 'পুরো নাম')} *</Label>
                   <Input
                     value={formData.customer_name}
                     onChange={(e) =>
@@ -218,9 +316,7 @@ export default function OrderForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('Phone Number', 'ফোন নম্বর')} *
-                  </label>
+                  <Label>{t('Phone Number', 'ফোন নম্বর')} *</Label>
                   <Input
                     value={formData.customer_phone}
                     onChange={(e) =>
@@ -230,19 +326,83 @@ export default function OrderForm() {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t('Division', 'বিভাগ')} *</Label>
+                    <Select
+                      value={formData.division_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, division_id: value })
+                      }
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('Select Division', 'বিভাগ নির্বাচন করুন')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {divisions.map((division) => (
+                          <SelectItem key={division.id} value={division.id}>
+                            {language === 'en' ? division.name_en : division.name_bn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>{t('District', 'জেলা')} *</Label>
+                    <Select
+                      value={formData.district_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, district_id: value })
+                      }
+                      disabled={!formData.division_id}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('Select District', 'জেলা নির্বাচন করুন')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredDistricts.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {language === 'en' ? district.name_en : district.name_bn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('Delivery Address', 'ডেলিভারি ঠিকানা')} *
-                  </label>
+                  <Label>{t('Detailed Address', 'বিস্তারিত ঠিকানা')} *</Label>
                   <Textarea
                     value={formData.customer_address}
                     onChange={(e) =>
                       setFormData({ ...formData, customer_address: e.target.value })
                     }
                     rows={3}
+                    placeholder={t('House/Road/Area details', 'বাসা/রোড/এলাকার বিস্তারিত')}
                     required
                   />
                 </div>
+
+                {deliveryCharge > 0 && (
+                  <Card className="bg-accent">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-5 w-5 text-primary" />
+                          <span className="font-medium">
+                            {t('Delivery Charge', 'ডেলিভারি চার্জ')}
+                          </span>
+                        </div>
+                        <span className="text-lg font-bold text-primary">
+                          ৳{deliveryCharge.toLocaleString()}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {product.is_advance_payment && (
                   <div>
@@ -261,9 +421,7 @@ export default function OrderForm() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {t('Additional Notes (Optional)', 'অতিরিক্ত নোট (ঐচ্ছিক)')}
-                  </label>
+                  <Label>{t('Additional Notes (Optional)', 'অতিরিক্ত নোট (ঐচ্ছিক)')}</Label>
                   <Textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -271,8 +429,29 @@ export default function OrderForm() {
                   />
                 </div>
 
+                <Card className="bg-primary/5">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>{t('Product Price', 'প্রোডাক্ট দাম')}</span>
+                        <span className="font-semibold">৳{displayPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t('Delivery Charge', 'ডেলিভারি চার্জ')}</span>
+                        <span className="font-semibold">৳{deliveryCharge.toLocaleString()}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between">
+                        <span className="font-bold">{t('Total Amount', 'মোট পরিমাণ')}</span>
+                        <span className="font-bold text-lg text-primary">
+                          ৳{(displayPrice + deliveryCharge).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {t('Confirm Order', 'অর্ডার নিশ্চিত করুন')}
+                  {loading ? t('Processing...', 'প্রক্রিয়াধীন...') : t('Confirm Order', 'অর্ডার নিশ্চিত করুন')}
                 </Button>
               </form>
             </CardContent>
