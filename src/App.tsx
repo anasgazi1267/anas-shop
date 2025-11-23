@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { UserAuthProvider } from "./contexts/UserAuthContext";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import OrderForm from "./pages/OrderForm";
@@ -29,18 +31,20 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AdminProvider>
-        <LanguageProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/order/:id" element={<OrderForm />} />
-              <Route path="/order-success/:trackingId" element={<OrderSuccess />} />
-              <Route path="/track-order" element={<TrackOrder />} />
-              <Route path="/request-product" element={<RequestProduct />} />
+        <UserAuthProvider>
+          <LanguageProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/order/:id" element={<OrderForm />} />
+                <Route path="/order-success/:trackingId" element={<OrderSuccess />} />
+                <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/request-product" element={<RequestProduct />} />
+                <Route path="/auth" element={<Auth />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -57,7 +61,8 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </LanguageProvider>
-      </AdminProvider>
+      </UserAuthProvider>
+    </AdminProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
