@@ -1,10 +1,12 @@
-import { ShoppingCart, Search, Menu, Phone, Mail, User, LogOut, X } from 'lucide-react';
+import { Search, Menu, Phone, Mail, User, LogOut, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { CartDrawer } from './CartDrawer';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage();
@@ -79,11 +81,27 @@ export function Header() {
             <Link to="/request-product" className="text-foreground hover:text-primary transition-colors font-medium">
               {t('Request', 'রিকোয়েস্ট')}
             </Link>
+            <CartDrawer />
             {user ? (
-              <Button variant="outline" onClick={signOut} size="sm">
-                <LogOut className="h-4 w-4 mr-2" />
-                {t('Logout', 'লগআউট')}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer">
+                      {t('My Dashboard', 'আমার ড্যাশবোর্ড')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {t('Logout', 'লগআউট')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link to="/auth">
                 <Button variant="default" size="sm">

@@ -6,8 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AdminProvider } from "./contexts/AdminContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
+import { CartProvider } from "./contexts/CartContext";
+import { WishlistProvider } from "./contexts/WishlistContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import UserDashboard from "./pages/UserDashboard";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import OrderForm from "./pages/OrderForm";
@@ -32,19 +35,22 @@ const App = () => (
     <TooltipProvider>
       <AdminProvider>
         <UserAuthProvider>
-          <LanguageProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/order/:id" element={<OrderForm />} />
-                <Route path="/order-success/:trackingId" element={<OrderSuccess />} />
-                <Route path="/track-order" element={<TrackOrder />} />
-                <Route path="/request-product" element={<RequestProduct />} />
-                <Route path="/auth" element={<Auth />} />
+          <CartProvider>
+            <WishlistProvider>
+              <LanguageProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/order/:id" element={<OrderForm />} />
+                    <Route path="/order-success/:trackingId" element={<OrderSuccess />} />
+                    <Route path="/track-order" element={<TrackOrder />} />
+                    <Route path="/request-product" element={<RequestProduct />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/dashboard" element={<UserDashboard />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -58,9 +64,11 @@ const App = () => (
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </LanguageProvider>
+                </Routes>
+              </BrowserRouter>
+            </LanguageProvider>
+          </WishlistProvider>
+        </CartProvider>
       </UserAuthProvider>
     </AdminProvider>
     </TooltipProvider>
