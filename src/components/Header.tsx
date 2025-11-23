@@ -1,10 +1,15 @@
-import { ShoppingCart, Search, Menu, Phone, Mail } from 'lucide-react';
+import { ShoppingCart, Search, Menu, Phone, Mail, User, LogOut, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useState } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage();
+  const { user, signOut } = useUserAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="border-b bg-card sticky top-0 z-50">
@@ -74,11 +79,85 @@ export function Header() {
             <Link to="/request-product" className="text-foreground hover:text-primary transition-colors font-medium">
               {t('Request', 'রিকোয়েস্ট')}
             </Link>
+            {user ? (
+              <Button variant="outline" onClick={signOut} size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                {t('Logout', 'লগআউট')}
+              </Button>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  {t('Login', 'লগইন')}
+                </Button>
+              </Link>
+            )}
           </nav>
 
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-6 w-6" />
-          </Button>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px]">
+              <SheetHeader>
+                <SheetTitle className="text-left">
+                  {t('Menu', 'মেনু')}
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-4 mt-6">
+                <Link 
+                  to="/" 
+                  className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('Home', 'হোম')}
+                </Link>
+                <Link 
+                  to="/products" 
+                  className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('Products', 'পণ্য')}
+                </Link>
+                <Link 
+                  to="/track-order" 
+                  className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('Track Order', 'অর্ডার ট্র্যাক')}
+                </Link>
+                <Link 
+                  to="/request-product" 
+                  className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('Request', 'রিকোয়েস্ট')}
+                </Link>
+                {user ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }} 
+                    className="w-full justify-start mt-4"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {t('Logout', 'লগআউট')}
+                  </Button>
+                ) : (
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="default" className="w-full justify-start mt-4">
+                      <User className="h-4 w-4 mr-2" />
+                      {t('Login', 'লগইন')}
+                    </Button>
+                  </Link>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
 
         <div className="md:hidden mt-4">
