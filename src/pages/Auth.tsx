@@ -11,6 +11,7 @@ import { UserCircle, Mail, Lock, User } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const [loginEmail, setLoginEmail] = useState('');
@@ -31,9 +32,29 @@ export default function Auth() {
       const { error } = await signIn(loginEmail, loginPassword);
       if (error) {
         toast.error(t('Login failed: ', 'লগইন ব্যর্থ হয়েছে: ') + error.message);
-      } else {
+        setLoading(false);
+        return;
+      }
+
+      // Check if user has admin role
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (userData.user) {
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userData.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
         toast.success(t('Login successful!', 'লগইন সফল হয়েছে!'));
-        navigate('/');
+        
+        // Redirect based on role
+        if (userRoles) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       toast.error(t('Login failed: ', 'লগইন ব্যর্থ হয়েছে: ') + error.message);

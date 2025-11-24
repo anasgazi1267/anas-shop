@@ -3,10 +3,11 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
+import { Languages, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function UserDashboard() {
   const { user, loading: authLoading } = useUserAuth();
-  const { language, t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
@@ -140,7 +141,7 @@ export default function UserDashboard() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               {t('Profile', 'প্রোফাইল')}
@@ -152,6 +153,10 @@ export default function UserDashboard() {
             <TabsTrigger value="wishlist">
               <Heart className="h-4 w-4 mr-2" />
               {t('Wishlist', 'উইশলিস্ট')}
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              {t('Settings', 'সেটিংস')}
             </TabsTrigger>
           </TabsList>
 
@@ -304,6 +309,42 @@ export default function UserDashboard() {
                 <p className="text-center text-muted-foreground">
                   {t('Wishlist feature coming soon', 'উইশলিস্ট ফিচার শীঘ্রই আসছে')}
                 </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('App Settings', 'অ্যাপ সেটিংস')}</CardTitle>
+                <CardDescription>
+                  {t('Manage your preferences', 'আপনার পছন্দ পরিচালনা করুন')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">
+                    {t('Language / ভাষা', 'ভাষা / Language')}
+                  </h3>
+                  <div className="flex gap-3">
+                    <Button
+                      variant={language === 'bn' ? 'default' : 'outline'}
+                      onClick={() => setLanguage('bn')}
+                      className="flex items-center gap-2 flex-1"
+                    >
+                      <Languages className="h-4 w-4" />
+                      বাংলা
+                    </Button>
+                    <Button
+                      variant={language === 'en' ? 'default' : 'outline'}
+                      onClick={() => setLanguage('en')}
+                      className="flex items-center gap-2 flex-1"
+                    >
+                      <Languages className="h-4 w-4" />
+                      English
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
