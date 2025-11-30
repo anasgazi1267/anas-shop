@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingCart, Package, CreditCard } from 'lucide-react';
+import { ShoppingCart, Package, CreditCard, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Product {
@@ -24,6 +24,7 @@ interface Product {
   is_advance_payment: boolean;
   advance_amount: number | null;
   stock: number;
+  sizes: string[];
 }
 
 export default function ProductDetail() {
@@ -55,6 +56,25 @@ export default function ProductDetail() {
       setProduct(data);
     }
     setLoading(false);
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: name,
+      text: `${name} - ৳${displayPrice.toLocaleString()}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success(t('Link copied to clipboard!', 'লিংক কপি হয়েছে!'));
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
   };
 
   if (loading) {
@@ -193,6 +213,21 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">
+                  {t('Available Sizes', 'উপলব্ধ সাইজ')}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size) => (
+                    <Badge key={size} variant="outline" className="px-3 py-1">
+                      {size}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               <Button
                 size="lg"
@@ -202,6 +237,16 @@ export default function ProductDetail() {
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {t('Order Now', 'অর্ডার করুন')}
+              </Button>
+              
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full"
+                onClick={handleShare}
+              >
+                <Share2 className="mr-2 h-5 w-5" />
+                {t('Share Product', 'শেয়ার করুন')}
               </Button>
             </div>
           </div>

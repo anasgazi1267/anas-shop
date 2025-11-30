@@ -216,7 +216,9 @@ export type Database = {
           id: string
           notes: string | null
           payment_method: string | null
+          payment_screenshot: string | null
           product_ids: string[]
+          product_sizes: Json | null
           status: string
           total_amount: number
           tracking_id: string
@@ -235,7 +237,9 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: string | null
+          payment_screenshot?: string | null
           product_ids: string[]
+          product_sizes?: Json | null
           status?: string
           total_amount: number
           tracking_id: string
@@ -254,7 +258,9 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: string | null
+          payment_screenshot?: string | null
           product_ids?: string[]
+          product_sizes?: Json | null
           status?: string
           total_amount?: number
           tracking_id?: string
@@ -365,6 +371,7 @@ export type Database = {
           name_bn: string
           name_en: string
           price: number
+          sizes: string[] | null
           slug: string
           stock: number
           updated_at: string
@@ -384,6 +391,7 @@ export type Database = {
           name_bn: string
           name_en: string
           price: number
+          sizes?: string[] | null
           slug: string
           stock?: number
           updated_at?: string
@@ -403,6 +411,7 @@ export type Database = {
           name_bn?: string
           name_en?: string
           price?: number
+          sizes?: string[] | null
           slug?: string
           stock?: number
           updated_at?: string

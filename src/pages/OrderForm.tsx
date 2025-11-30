@@ -21,6 +21,7 @@ interface Product {
   discount_price: number | null;
   is_advance_payment: boolean;
   advance_amount: number | null;
+  sizes: string[];
 }
 
 interface Division {
@@ -62,8 +63,10 @@ export default function OrderForm() {
     district_id: '',
     transaction_id: '',
     notes: '',
+    selected_size: '',
   });
   const [loading, setLoading] = useState(false);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -107,7 +110,7 @@ export default function OrderForm() {
   const fetchProduct = async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name_en, name_bn, price, discount_price, is_advance_payment, advance_amount')
+      .select('id, name_en, name_bn, price, discount_price, is_advance_payment, advance_amount, sizes')
       .eq('id', id)
       .single();
 
@@ -169,12 +172,40 @@ export default function OrderForm() {
     toast.success(t('Copied to clipboard!', 'ক্লিপবোর্ডে কপি হয়েছে!'));
   };
 
+  const uploadScreenshot = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `screenshots/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payment-screenshots')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-screenshots')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Screenshot upload error:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.customer_name || !formData.customer_phone || !formData.customer_address || 
         !formData.division_id || !formData.district_id) {
       toast.error(t('Please fill all required fields', 'সকল প্রয়োজনীয় ক্ষেত্র পূরণ করুন'));
+      return;
+    }
+
+    if (product?.sizes && product.sizes.length > 0 && !formData.selected_size) {
+      toast.error(t('Please select a size', 'সাইজ নির্বাচন করুন'));
       return;
     }
 
@@ -187,10 +218,19 @@ export default function OrderForm() {
 
     setLoading(true);
 
+    let screenshotUrl = null;
+    if (screenshotFile && product?.is_advance_payment) {
+      screenshotUrl = await uploadScreenshot(screenshotFile);
+    }
+
     const displayPrice = product?.discount_price || product?.price || 0;
     const totalAmount = displayPrice + deliveryCharge;
     const trackingIdResult = await supabase.rpc('generate_tracking_id');
     
+    const productSizes = formData.selected_size 
+      ? [{ product_id: id, size: formData.selected_size }]
+      : [];
+
     const orderData = {
       tracking_id: trackingIdResult.data || `AS${Date.now().toString().slice(-6)}`,
       customer_name: formData.customer_name,
@@ -206,6 +246,8 @@ export default function OrderForm() {
       payment_method: product?.is_advance_payment ? 'advance' : 'cod',
       status: 'pending',
       notes: formData.notes,
+      payment_screenshot: screenshotUrl,
+      product_sizes: productSizes,
     };
 
     const { data, error } = await supabase.from('orders').insert([orderData]).select().single();
@@ -404,20 +446,61 @@ export default function OrderForm() {
                   </Card>
                 )}
 
-                {product.is_advance_payment && (
+                {product.sizes && product.sizes.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {t('Transaction ID', 'ট্রানজেকশন আইডি')} *
-                    </label>
-                    <Input
-                      value={formData.transaction_id}
-                      onChange={(e) =>
-                        setFormData({ ...formData, transaction_id: e.target.value })
+                    <Label>{t('Select Size', 'সাইজ নির্বাচন করুন')} *</Label>
+                    <Select
+                      value={formData.selected_size}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, selected_size: value })
                       }
-                      placeholder={t('Enter bKash/Nagad transaction ID', 'বিকাশ/নগদ ট্রানজেকশন আইডি লিখুন')}
-                      required={product.is_advance_payment}
-                    />
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('Choose size', 'সাইজ বেছে নিন')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {product.sizes.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                )}
+
+                {product.is_advance_payment && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        {t('Transaction ID', 'ট্রানজেকশন আইডি')} *
+                      </label>
+                      <Input
+                        value={formData.transaction_id}
+                        onChange={(e) =>
+                          setFormData({ ...formData, transaction_id: e.target.value })
+                        }
+                        placeholder={t('Enter bKash/Nagad transaction ID', 'বিকাশ/নগদ ট্রানজেকশন আইডি লিখুন')}
+                        required={product.is_advance_payment}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        {t('Payment Screenshot (Optional)', 'পেমেন্ট স্ক্রিনশট (ঐচ্ছিক)')}
+                      </label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t('Upload payment confirmation screenshot', 'পেমেন্ট নিশ্চিতকরণ স্ক্রিনশট আপলোড করুন')}
+                      </p>
+                    </div>
+                  </>
                 )}
 
                 <div>
