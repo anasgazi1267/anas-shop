@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAdmin } from '@/contexts/AdminContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
 
@@ -20,8 +21,29 @@ export default function AdminLogin() {
 
     try {
       await signIn(email, password);
-      toast.success('লগইন সফল হয়েছে');
-      navigate('/admin/dashboard');
+      
+      // Wait a bit for auth state to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check if user is admin after login
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        if (roleData) {
+          toast.success('লগইন সফল হয়েছে');
+          navigate('/admin/dashboard');
+        } else {
+          toast.error('আপনার এডমিন অ্যাক্সেস নেই');
+          await supabase.auth.signOut();
+        }
+      }
     } catch (error: any) {
       toast.error('লগইন ব্যর্থ হয়েছে: ' + error.message);
     } finally {
