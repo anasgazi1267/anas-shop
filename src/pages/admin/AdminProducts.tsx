@@ -25,6 +25,7 @@ interface Product {
   is_featured: boolean;
   is_advance_payment: boolean;
   advance_amount: number | null;
+  sizes: string[];
 }
 
 export default function AdminProducts() {
@@ -46,6 +47,7 @@ export default function AdminProducts() {
     is_featured: false,
     is_advance_payment: false,
     advance_amount: 0,
+    sizes: '',
   });
 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
@@ -109,12 +111,18 @@ export default function AdminProducts() {
 
       const slug = formData.name_en.toLowerCase().replace(/\s+/g, '-');
 
+      const sizesArray = formData.sizes
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
       const productData = {
         ...formData,
         slug,
         images: imageUrls,
         discount_price: formData.discount_price > 0 ? formData.discount_price : null,
         advance_amount: formData.is_advance_payment ? formData.advance_amount : null,
+        sizes: sizesArray,
       };
 
       if (editingProduct) {
@@ -175,6 +183,7 @@ export default function AdminProducts() {
       is_featured: product.is_featured,
       is_advance_payment: product.is_advance_payment,
       advance_amount: product.advance_amount || 0,
+      sizes: product.sizes?.join(', ') || '',
     });
     setDialogOpen(true);
   };
@@ -192,6 +201,7 @@ export default function AdminProducts() {
       is_featured: false,
       is_advance_payment: false,
       advance_amount: 0,
+      sizes: '',
     });
     setEditingProduct(null);
     setImageFiles(null);
@@ -294,6 +304,18 @@ export default function AdminProducts() {
                   />
                   <p className="text-sm text-muted-foreground mt-1">
                     একাধিক ছবি নির্বাচন করতে পারবেন
+                  </p>
+                </div>
+
+                <div>
+                  <Label>সাইজ (কমা দিয়ে আলাদা করুন)</Label>
+                  <Input
+                    value={formData.sizes}
+                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                    placeholder="S, M, L, XL বা 38, 39, 40, 41"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    উদাহরণ: S, M, L, XL অথবা 38, 39, 40, 41
                   </p>
                 </div>
 

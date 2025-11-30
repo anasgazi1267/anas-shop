@@ -22,6 +22,8 @@ interface Order {
   payment_method: string | null;
   transaction_id: string | null;
   notes: string | null;
+  payment_screenshot: string | null;
+  product_sizes: any;
 }
 
 export default function AdminOrders() {
@@ -225,6 +227,24 @@ export default function AdminOrders() {
                     <div>
                       <p className="text-sm text-muted-foreground">ট্রানজেকশন আইডি</p>
                       <p className="font-semibold">{selectedOrder.transaction_id}</p>
+                    </div>
+                  )}
+                  {selectedOrder.product_sizes && Array.isArray(selectedOrder.product_sizes) && selectedOrder.product_sizes.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">সাইজ</p>
+                      <p className="font-semibold">
+                        {selectedOrder.product_sizes.map((ps: any) => ps.size).join(', ')}
+                      </p>
+                    </div>
+                  )}
+                  {selectedOrder.payment_screenshot && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-muted-foreground mb-2">পেমেন্ট স্ক্রিনশট</p>
+                      <img
+                        src={selectedOrder.payment_screenshot}
+                        alt="Payment Screenshot"
+                        className="max-w-md rounded-lg border"
+                      />
                     </div>
                   )}
                   {selectedOrder.notes && (
