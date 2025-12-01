@@ -10,7 +10,8 @@ import {
   LogOut,
   Users,
   Image,
-  FileText
+  FileText,
+  BarChart3
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -34,6 +35,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { path: '/admin/categories', icon: FileText, label: 'ক্যাটাগরি' },
     { path: '/admin/banners', icon: Image, label: 'ব্যানার' },
     { path: '/admin/product-requests', icon: Users, label: 'প্রোডাক্ট রিকোয়েস্ট' },
+    { path: '/admin/analytics', icon: BarChart3, label: 'এনালিটিক্স' },
     { path: '/admin/settings', icon: Settings, label: 'সেটিংস' },
   ];
 

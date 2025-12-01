@@ -1,6 +1,32 @@
 import { Facebook, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+
+function LanguageSwitcher() {
+  const { language, setLanguage } = useLanguage();
+  
+  return (
+    <div className="flex gap-2">
+      <Button
+        variant={language === 'bn' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setLanguage('bn')}
+        className="h-8 px-3"
+      >
+        বাংলা
+      </Button>
+      <Button
+        variant={language === 'en' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setLanguage('en')}
+        className="h-8 px-3"
+      >
+        English
+      </Button>
+    </div>
+  );
+}
 
 export function Footer() {
   const { t } = useLanguage();
@@ -69,7 +95,7 @@ export function Footer() {
 
           <div>
             <h4 className="font-semibold mb-4">{t('Follow Us', 'আমাদের অনুসরণ করুন')}</h4>
-            <div className="flex gap-4">
+            <div className="flex gap-4 mb-6">
               <a
                 href="https://www.facebook.com"
                 target="_blank"
@@ -87,6 +113,8 @@ export function Footer() {
                 <Youtube className="h-6 w-6" />
               </a>
             </div>
+            <h4 className="font-semibold mb-3">{t('Language', 'ভাষা')}</h4>
+            <LanguageSwitcher />
           </div>
         </div>
 

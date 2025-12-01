@@ -1,4 +1,4 @@
-import { Search, Menu, Phone, Mail, User, LogOut, ShoppingCart } from 'lucide-react';
+import { Search, Menu, User, LogOut, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
@@ -15,39 +15,6 @@ export function Header() {
 
   return (
     <header className="border-b bg-card sticky top-0 z-50">
-      <div className="bg-secondary text-secondary-foreground py-2">
-        <div className="container mx-auto px-4 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            <a href="tel:01401757283" className="flex items-center gap-2 hover:text-primary transition-colors">
-              <Phone className="h-4 w-4" />
-              <span>01401757283</span>
-            </a>
-            <a href="mailto:zenmarket55@gmail.com" className="flex items-center gap-2 hover:text-primary transition-colors">
-              <Mail className="h-4 w-4" />
-              <span>zenmarket55@gmail.com</span>
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={language === 'bn' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('bn')}
-              className="h-7 px-3"
-            >
-              বাংলা
-            </Button>
-            <Button
-              variant={language === 'en' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('en')}
-              className="h-7 px-3"
-            >
-              English
-            </Button>
-          </div>
-        </div>
-      </div>
-      
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
