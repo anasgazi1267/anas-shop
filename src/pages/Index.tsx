@@ -94,8 +94,8 @@ const Index = () => {
             </h2>
             
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="space-y-3">
                     <Skeleton className="aspect-square" />
                     <Skeleton className="h-4 w-3/4" />
@@ -104,7 +104,7 @@ const Index = () => {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {newProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
@@ -120,8 +120,8 @@ const Index = () => {
             </h2>
             
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="space-y-3">
                     <Skeleton className="aspect-square" />
                     <Skeleton className="h-4 w-3/4" />
@@ -130,7 +130,7 @@ const Index = () => {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {discountProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
@@ -146,8 +146,8 @@ const Index = () => {
             </h2>
             
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="space-y-3">
                     <Skeleton className="aspect-square" />
                     <Skeleton className="h-4 w-3/4" />
@@ -156,7 +156,7 @@ const Index = () => {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
