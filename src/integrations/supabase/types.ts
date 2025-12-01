@@ -355,6 +355,38 @@ export type Database = {
           },
         ]
       }
+      product_views: {
+        Row: {
+          id: string
+          product_id: string
+          user_agent: string | null
+          user_ip: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          user_agent?: string | null
+          user_ip?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          user_agent?: string | null
+          user_ip?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_views_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           advance_amount: number | null

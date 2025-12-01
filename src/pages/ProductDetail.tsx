@@ -38,8 +38,23 @@ export default function ProductDetail() {
   useEffect(() => {
     if (id) {
       fetchProduct();
+      trackProductView();
     }
   }, [id]);
+
+  const trackProductView = async () => {
+    try {
+      await supabase
+        .from('product_views')
+        .insert({
+          product_id: id,
+          user_ip: null,
+          user_agent: navigator.userAgent
+        });
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
 
   const fetchProduct = async () => {
     const { data, error } = await supabase

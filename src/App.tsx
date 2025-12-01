@@ -8,6 +8,7 @@ import { AdminProvider } from "./contexts/AdminContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
+import { WhatsAppButton } from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import UserDashboard from "./pages/UserDashboard";
@@ -25,6 +26,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminProductRequests from "./pages/admin/AdminProductRequests";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminProductAnalytics from "./pages/admin/AdminProductAnalytics";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +42,7 @@ const App = () => (
               <LanguageProvider>
                 <Toaster />
                 <Sonner />
+                <WhatsAppButton />
                 <BrowserRouter>
                   <Routes>
                     <Route path="/" element={<Index />} />
@@ -61,6 +64,7 @@ const App = () => (
               <Route path="/admin/banners" element={<ProtectedAdminRoute><AdminBanners /></ProtectedAdminRoute>} />
               <Route path="/admin/product-requests" element={<ProtectedAdminRoute><AdminProductRequests /></ProtectedAdminRoute>} />
               <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
+              <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminProductAnalytics /></ProtectedAdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
