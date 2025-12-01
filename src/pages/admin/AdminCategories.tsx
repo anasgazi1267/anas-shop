@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -27,6 +27,9 @@ export default function AdminCategories() {
     name_bn: '',
     image_url: '',
   });
+  const [uploading, setUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     fetchCategories();
@@ -48,12 +51,60 @@ export default function AdminCategories() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData({ ...formData, image_url: '' });
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return formData.image_url;
+
+    setUploading(true);
+    try {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('category-images')
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('category-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      toast.error('ইমেজ আপলোড সমস্যা: ' + error.message);
+      return formData.image_url;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       const slug = formData.name_en.toLowerCase().replace(/\s+/g, '-');
+      const imageUrl = await uploadImage();
 
       const categoryData = {
         ...formData,
+        image_url: imageUrl,
         slug,
       };
 
@@ -106,6 +157,7 @@ export default function AdminCategories() {
       name_bn: category.name_bn,
       image_url: category.image_url || '',
     });
+    setImagePreview(category.image_url || '');
     setDialogOpen(true);
   };
 
@@ -116,6 +168,8 @@ export default function AdminCategories() {
       image_url: '',
     });
     setEditingCategory(null);
+    setImageFile(null);
+    setImagePreview('');
   };
 
   return (
@@ -157,15 +211,41 @@ export default function AdminCategories() {
                   />
                 </div>
                 <div>
-                  <Label>ইমেজ URL (অপশনাল)</Label>
-                  <Input
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://..."
-                  />
+                  <Label>ক্যাটাগরি ইমেজ</Label>
+                  <div className="space-y-3">
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">ইমেজ আপলোড করুন</p>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <Button onClick={handleSave} className="w-full">
-                  {editingCategory ? 'আপডেট করুন' : 'সেভ করুন'}
+                <Button onClick={handleSave} className="w-full" disabled={uploading}>
+                  {uploading ? 'আপলোড হচ্ছে...' : editingCategory ? 'আপডেট করুন' : 'সেভ করুন'}
                 </Button>
               </div>
             </DialogContent>
@@ -176,6 +256,13 @@ export default function AdminCategories() {
           {categories.map((category) => (
             <Card key={category.id}>
               <CardHeader>
+                {category.image_url && (
+                  <img
+                    src={category.image_url}
+                    alt={category.name_bn}
+                    className="w-full h-32 object-cover rounded-lg mb-3"
+                  />
+                )}
                 <CardTitle className="text-lg">{category.name_bn}</CardTitle>
                 <p className="text-sm text-muted-foreground">{category.name_en}</p>
               </CardHeader>
