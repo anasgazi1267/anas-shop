@@ -26,6 +26,10 @@ interface Product {
   is_advance_payment: boolean;
   advance_amount: number | null;
   sizes: string[];
+  keywords: string[];
+  meta_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
 }
 
 export default function AdminProducts() {
@@ -48,6 +52,10 @@ export default function AdminProducts() {
     is_advance_payment: false,
     advance_amount: 0,
     sizes: '',
+    keywords: '',
+    meta_title: '',
+    meta_description: '',
+    meta_keywords: '',
   });
 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
@@ -116,6 +124,11 @@ export default function AdminProducts() {
         .map(s => s.trim())
         .filter(s => s.length > 0);
 
+      const keywordsArray = formData.keywords
+        .split(',')
+        .map(k => k.trim())
+        .filter(k => k.length > 0);
+
       const productData = {
         ...formData,
         slug,
@@ -123,6 +136,10 @@ export default function AdminProducts() {
         discount_price: formData.discount_price > 0 ? formData.discount_price : null,
         advance_amount: formData.is_advance_payment ? formData.advance_amount : null,
         sizes: sizesArray,
+        keywords: keywordsArray,
+        meta_title: formData.meta_title || null,
+        meta_description: formData.meta_description || null,
+        meta_keywords: formData.meta_keywords || null,
       };
 
       if (editingProduct) {
@@ -184,6 +201,10 @@ export default function AdminProducts() {
       is_advance_payment: product.is_advance_payment,
       advance_amount: product.advance_amount || 0,
       sizes: product.sizes?.join(', ') || '',
+      keywords: product.keywords?.join(', ') || '',
+      meta_title: product.meta_title || '',
+      meta_description: product.meta_description || '',
+      meta_keywords: product.meta_keywords || '',
     });
     setDialogOpen(true);
   };
@@ -202,6 +223,10 @@ export default function AdminProducts() {
       is_advance_payment: false,
       advance_amount: 0,
       sizes: '',
+      keywords: '',
+      meta_title: '',
+      meta_description: '',
+      meta_keywords: '',
     });
     setEditingProduct(null);
     setImageFiles(null);
@@ -305,6 +330,9 @@ export default function AdminProducts() {
                   <p className="text-sm text-muted-foreground mt-1">
                     একাধিক ছবি নির্বাচন করতে পারবেন
                   </p>
+                  <p className="text-xs text-primary font-medium mt-2">
+                    💡 রিকমেন্ডেড: 800x800 পিক্সেল, সাইজ 500KB এর কম
+                  </p>
                 </div>
 
                 <div>
@@ -317,6 +345,63 @@ export default function AdminProducts() {
                   <p className="text-sm text-muted-foreground mt-1">
                     উদাহরণ: S, M, L, XL অথবা 38, 39, 40, 41
                   </p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-3">SEO সেটিংস</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label>কীওয়ার্ড (কমা দিয়ে আলাদা করুন)</Label>
+                      <Input
+                        value={formData.keywords}
+                        onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                        placeholder="জুতা, স্নিকার, পুরুষ, ক্যাজুয়াল"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        সার্চের জন্য গুরুত্বপূর্ণ শব্দ লিখুন
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Meta Title (SEO)</Label>
+                      <Input
+                        value={formData.meta_title}
+                        onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                        placeholder="প্রোডাক্ট নাম - ব্র্যান্ড নাম"
+                        maxLength={60}
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Google Search এ দেখাবে (সর্বোচ্চ 60 অক্ষর)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Meta Description (SEO)</Label>
+                      <Textarea
+                        value={formData.meta_description}
+                        onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                        placeholder="প্রোডাক্টের সংক্ষিপ্ত বিবরণ যা Google Search এ দেখাবে"
+                        maxLength={160}
+                        rows={3}
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        সংক্ষিপ্ত বিবরণ (সর্বোচ্চ 160 অক্ষর)
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Meta Keywords (SEO)</Label>
+                      <Input
+                        value={formData.meta_keywords}
+                        onChange={(e) => setFormData({ ...formData, meta_keywords: e.target.value })}
+                        placeholder="জুতা, স্নিকার, পুরুষ"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        SEO এর জন্য কীওয়ার্ড
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">

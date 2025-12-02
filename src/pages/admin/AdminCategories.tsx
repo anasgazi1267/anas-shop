@@ -242,6 +242,9 @@ export default function AdminCategories() {
                         />
                       </div>
                     )}
+                    <p className="text-xs text-primary font-medium mt-2">
+                      💡 রিকমেন্ডেড: 600x400 পিক্সেল, সাইজ 300KB এর কম
+                    </p>
                   </div>
                 </div>
                 <Button onClick={handleSave} className="w-full" disabled={uploading}>

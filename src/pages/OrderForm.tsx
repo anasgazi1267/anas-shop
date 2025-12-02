@@ -82,7 +82,7 @@ export default function OrderForm() {
     if (formData.division_id) {
       const filtered = districts.filter(d => d.division_id === formData.division_id);
       setFilteredDistricts(filtered);
-      setFormData({ ...formData, district_id: '' });
+      setFormData(prev => ({ ...prev, district_id: '' }));
     }
   }, [formData.division_id, districts]);
 
