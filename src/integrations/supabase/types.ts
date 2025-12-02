@@ -400,6 +400,10 @@ export type Database = {
           is_advance_payment: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
+          keywords: string[] | null
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
           name_bn: string
           name_en: string
           price: number
@@ -420,6 +424,10 @@ export type Database = {
           is_advance_payment?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn: string
           name_en: string
           price: number
@@ -440,6 +448,10 @@ export type Database = {
           is_advance_payment?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn?: string
           name_en?: string
           price?: number

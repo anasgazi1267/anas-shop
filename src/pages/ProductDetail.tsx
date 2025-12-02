@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,10 @@ interface Product {
   advance_amount: number | null;
   stock: number;
   sizes: string[];
+  keywords: string[];
+  meta_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
 }
 
 export default function ProductDetail() {
@@ -121,8 +126,26 @@ export default function ProductDetail() {
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = product.discount_price && product.discount_price < product.price;
 
+  const metaTitle = product.meta_title || `${name} - ৳${displayPrice.toLocaleString()}`;
+  const metaDescription = product.meta_description || description?.substring(0, 160) || `${name} - সেরা মূল্যে কিনুন`;
+  const metaKeywords = product.meta_keywords || product.keywords?.join(', ') || name;
+
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta name="keywords" content={metaKeywords} />
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={product.images[0] || ''} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={product.images[0] || ''} />
+      </Helmet>
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">

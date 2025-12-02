@@ -5,6 +5,8 @@ import { ProductCard } from '@/components/ProductCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -28,12 +30,30 @@ interface Product {
 export default function Products() {
   const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchProducts();
   }, [sortBy]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setProducts(allProducts);
+    } else {
+      const filtered = allProducts.filter(product => {
+        const query = searchQuery.toLowerCase();
+        return (
+          product.name_en.toLowerCase().includes(query) ||
+          product.name_bn.toLowerCase().includes(query) ||
+          (product as any).keywords?.some((kw: string) => kw.toLowerCase().includes(query))
+        );
+      });
+      setProducts(filtered);
+    }
+  }, [searchQuery, allProducts]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -58,6 +78,7 @@ export default function Products() {
     if (error) {
       console.error('Error fetching products:', error);
     } else {
+      setAllProducts(data || []);
       setProducts(data || []);
     }
     setLoading(false);
@@ -68,25 +89,38 @@ export default function Products() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="space-y-6 mb-8">
           <h1 className="text-3xl font-bold">{t('All Products', 'সকল পণ্য')}</h1>
           
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t('Sort by', 'সাজান')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">
-                {t('Newest First', 'নতুন আগে')}
-              </SelectItem>
-              <SelectItem value="price_low">
-                {t('Price: Low to High', 'দাম: কম থেকে বেশি')}
-              </SelectItem>
-              <SelectItem value="price_high">
-                {t('Price: High to Low', 'দাম: বেশি থেকে কম')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t('Search products...', 'পণ্য খুঁজুন...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t('Sort by', 'সাজান')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">
+                  {t('Newest First', 'নতুন আগে')}
+                </SelectItem>
+                <SelectItem value="price_low">
+                  {t('Price: Low to High', 'দাম: কম থেকে বেশি')}
+                </SelectItem>
+                <SelectItem value="price_high">
+                  {t('Price: High to Low', 'দাম: বেশি থেকে কম')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {loading ? (
