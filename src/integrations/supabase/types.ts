@@ -615,6 +615,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_record_view: {
+        Args: { p_product_id: string; p_user_ip: string }
+        Returns: boolean
+      }
       generate_tracking_id: { Args: never; Returns: string }
       has_role: {
         Args: {
