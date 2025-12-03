@@ -7,6 +7,9 @@ import { CategoryCard } from '@/components/CategoryCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -58,110 +61,125 @@ const Index = () => {
     setLoading(false);
   };
 
+  const ProductGridSkeleton = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="space-y-2">
+          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const SectionHeader = ({ title, link }: { title: string; link: string }) => (
+    <div className="flex items-center justify-between mb-4 md:mb-6">
+      <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+      <Button variant="ghost" size="sm" asChild>
+        <Link to={link} className="text-primary">
+          {t('View All', 'সব দেখুন')}
+          <ArrowRight className="h-4 w-4 ml-1" />
+        </Link>
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
       <main className="flex-1">
-        <section className="container mx-auto px-4 py-8">
+        {/* Hero Slider */}
+        <section className="container mx-auto px-3 md:px-4 py-4 md:py-6">
           <HeroSlider />
         </section>
 
-        <section className="container mx-auto px-4 py-12">
-          <h2 className="text-3xl font-bold mb-8">
-            {t('Popular Categories', 'জনপ্রিয় ক্যাটাগরি')}
-          </h2>
+        {/* Categories */}
+        <section className="container mx-auto px-3 md:px-4 py-6 md:py-8">
+          <SectionHeader 
+            title={t('Popular Categories', 'জনপ্রিয় ক্যাটাগরি')} 
+            link="/products" 
+          />
           
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="aspect-square" />
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-lg" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {categories.map((category) => (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+              {categories.slice(0, 6).map((category) => (
                 <CategoryCard key={category.id} {...category} />
               ))}
             </div>
           )}
         </section>
 
-        {newProducts.length > 0 && (
-          <section className="container mx-auto px-4 py-12 bg-accent/30">
-            <h2 className="text-3xl font-bold mb-8">
-              {t('New Arrivals', 'নতুন পণ্য')}
-            </h2>
-            
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-square" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {newProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
-              </div>
-            )}
+        {/* New Arrivals */}
+        {(loading || newProducts.length > 0) && (
+          <section className="bg-accent/20 py-6 md:py-8">
+            <div className="container mx-auto px-3 md:px-4">
+              <SectionHeader 
+                title={t('New Arrivals', 'নতুন পণ্য')} 
+                link="/products?filter=new" 
+              />
+              
+              {loading ? (
+                <ProductGridSkeleton />
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {newProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         )}
 
-        {discountProducts.length > 0 && (
-          <section className="container mx-auto px-4 py-12">
-            <h2 className="text-3xl font-bold mb-8">
-              {t('Special Discounts', 'বিশেষ ছাড়')}
-            </h2>
-            
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-square" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {discountProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
-              </div>
-            )}
+        {/* Discount Products */}
+        {(loading || discountProducts.length > 0) && (
+          <section className="py-6 md:py-8">
+            <div className="container mx-auto px-3 md:px-4">
+              <SectionHeader 
+                title={t('Special Discounts', 'বিশেষ ছাড়')} 
+                link="/products?filter=discount" 
+              />
+              
+              {loading ? (
+                <ProductGridSkeleton />
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {discountProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         )}
 
-        {featuredProducts.length > 0 && (
-          <section className="container mx-auto px-4 py-12 bg-accent/30">
-            <h2 className="text-3xl font-bold mb-8">
-              {t('Featured Products', 'ফিচার্ড পণ্য')}
-            </h2>
-            
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="aspect-square" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
-              </div>
-            )}
+        {/* Featured Products */}
+        {(loading || featuredProducts.length > 0) && (
+          <section className="bg-accent/20 py-6 md:py-8">
+            <div className="container mx-auto px-3 md:px-4">
+              <SectionHeader 
+                title={t('Featured Products', 'ফিচার্ড পণ্য')} 
+                link="/products?filter=featured" 
+              />
+              
+              {loading ? (
+                <ProductGridSkeleton />
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {featuredProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         )}
       </main>

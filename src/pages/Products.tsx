@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -85,14 +85,14 @@ export default function Products() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="space-y-6 mb-8">
-          <h1 className="text-3xl font-bold">{t('All Products', 'সকল পণ্য')}</h1>
+      <main className="flex-1 container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="space-y-4 mb-6">
+          <h1 className="text-xl md:text-3xl font-bold">{t('All Products', 'সকল পণ্য')}</h1>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -100,12 +100,13 @@ export default function Products() {
                 placeholder={t('Search products...', 'পণ্য খুঁজুন...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-10"
               />
             </div>
             
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[160px] h-10">
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
                 <SelectValue placeholder={t('Sort by', 'সাজান')} />
               </SelectTrigger>
               <SelectContent>
@@ -121,26 +122,33 @@ export default function Products() {
               </SelectContent>
             </Select>
           </div>
+
+          <p className="text-sm text-muted-foreground">
+            {products.length} {t('products found', 'টি পণ্য পাওয়া গেছে')}
+          </p>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="aspect-square" />
+              <div key={i} className="space-y-2">
+                <Skeleton className="aspect-square rounded-lg" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground">
+          <div className="text-center py-16 bg-muted/30 rounded-lg">
+            <p className="text-lg text-muted-foreground">
               {t('No products found', 'কোনো পণ্য পাওয়া যায়নি')}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {t('Try a different search term', 'অন্য কিছু দিয়ে খুঁজুন')}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {products.map((product) => (
               <ProductCard key={product.id} {...product} />
             ))}
