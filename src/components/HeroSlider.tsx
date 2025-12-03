@@ -1,36 +1,72 @@
+import { useEffect, useState } from 'react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
-import heroBanner from '@/assets/hero-banner.jpg';
+import { supabase } from '@/integrations/supabase/client';
 import Autoplay from 'embla-carousel-autoplay';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface Banner {
+  id: string;
+  image_url: string;
+  title_en: string | null;
+  title_bn: string | null;
+  link: string | null;
+  is_active: boolean;
+}
 
 export function HeroSlider() {
   const { t } = useLanguage();
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const slides = [
-    {
-      title_en: 'Welcome to Anas Shop',
-      title_bn: 'আনাস শপে স্বাগতম',
-      subtitle_en: 'Your trusted online shopping destination',
-      subtitle_bn: 'আপনার বিশ্বস্ত অনলাইন শপিং গন্তব্য',
-      image: heroBanner,
-    },
-    {
-      title_en: 'Best Deals on Electronics',
-      title_bn: 'ইলেকট্রনিক্সে সেরা অফার',
-      subtitle_en: 'Up to 50% off on selected items',
-      subtitle_bn: 'নির্বাচিত পণ্যে ৫০% পর্যন্ত ছাড়',
-      image: heroBanner,
-    },
-    {
-      title_en: 'Latest Fashion Trends',
-      title_bn: 'সর্বশেষ ফ্যাশন ট্রেন্ড',
-      subtitle_en: 'Explore our new collection',
-      subtitle_bn: 'আমাদের নতুন কালেকশন ঘুরে দেখুন',
-      image: heroBanner,
-    },
-  ];
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      setBanners(data || []);
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full">
+        <Skeleton className="h-[200px] md:h-[400px] w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  if (banners.length === 0) {
+    return (
+      <div className="w-full h-[200px] md:h-[400px] bg-gradient-to-r from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
+        <div className="text-center px-4">
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
+            {t('Welcome to Anas Shop', 'আনাস শপে স্বাগতম')}
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {t('Your trusted online shopping destination', 'আপনার বিশ্বস্ত অনলাইন শপিং গন্তব্য')}
+          </p>
+          <Button asChild>
+            <Link to="/products">{t('Shop Now', 'এখনই কিনুন')}</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Carousel
@@ -46,37 +82,40 @@ export function HeroSlider() {
       className="w-full"
     >
       <CarouselContent>
-        {slides.map((slide, index) => (
-          <CarouselItem key={index}>
-            <div className="relative h-[400px] md:h-[500px] overflow-hidden rounded-lg">
-              <img
-                src={slide.image}
-                alt={slide.title_en}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent flex items-center">
-                <div className="container mx-auto px-4">
-                  <div className="max-w-xl space-y-4">
-                    <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-                      {t(slide.title_en, slide.title_bn)}
-                    </h1>
-                    <p className="text-xl md:text-2xl text-muted-foreground">
-                      {t(slide.subtitle_en, slide.subtitle_bn)}
-                    </p>
-                    <Button asChild size="lg" className="mt-6">
-                      <Link to="/products">
-                        {t('Shop Now', 'এখনই কিনুন')}
-                      </Link>
-                    </Button>
+        {banners.map((banner) => (
+          <CarouselItem key={banner.id}>
+            <Link to={banner.link || '/products'} className="block">
+              <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg">
+                <img
+                  src={banner.image_url}
+                  alt={banner.title_bn || banner.title_en || 'Banner'}
+                  className="w-full h-full object-cover"
+                />
+                {(banner.title_en || banner.title_bn) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent flex items-center">
+                    <div className="container mx-auto px-4 md:px-8">
+                      <div className="max-w-md space-y-2 md:space-y-4">
+                        <h2 className="text-xl md:text-4xl font-bold text-foreground line-clamp-2">
+                          {t(banner.title_en || '', banner.title_bn || '')}
+                        </h2>
+                        <Button size="sm" className="md:size-default">
+                          {t('Shop Now', 'এখনই কিনুন')}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
+            </Link>
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="left-4" />
-      <CarouselNext className="right-4" />
+      {banners.length > 1 && (
+        <>
+          <CarouselPrevious className="left-2 md:left-4" />
+          <CarouselNext className="right-2 md:right-4" />
+        </>
+      )}
     </Carousel>
   );
 }
