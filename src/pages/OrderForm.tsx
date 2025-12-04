@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ interface Product {
   is_advance_payment: boolean;
   advance_amount: number | null;
   sizes: string[];
+  affiliate_commission: number | null;
 }
 
 interface Division {
@@ -46,8 +47,10 @@ interface DeliverySettings {
 
 export default function OrderForm() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
+  const refCode = searchParams.get('ref');
   const [product, setProduct] = useState<Product | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [divisions, setDivisions] = useState<Division[]>([]);
@@ -110,7 +113,7 @@ export default function OrderForm() {
   const fetchProduct = async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name_en, name_bn, price, discount_price, is_advance_payment, advance_amount, sizes')
+      .select('id, name_en, name_bn, price, discount_price, is_advance_payment, advance_amount, sizes, affiliate_commission')
       .eq('id', id)
       .single();
 
@@ -256,6 +259,30 @@ export default function OrderForm() {
       toast.error(t('Failed to place order', 'অর্ডার করতে ব্যর্থ হয়েছে'));
       console.error(error);
     } else {
+      // Record affiliate earning if referral code exists
+      if (refCode && product?.affiliate_commission && product.affiliate_commission > 0) {
+        try {
+          // Find the affiliate link owner
+          const { data: affiliateLink } = await supabase
+            .from('affiliate_links')
+            .select('user_id')
+            .eq('referral_code', refCode)
+            .single();
+
+          if (affiliateLink) {
+            await supabase.from('affiliate_earnings').insert({
+              user_id: affiliateLink.user_id,
+              order_id: data.id,
+              product_id: id,
+              amount: product.affiliate_commission,
+              status: 'pending'
+            });
+          }
+        } catch (affError) {
+          console.error('Affiliate earning error:', affError);
+        }
+      }
+
       toast.success(
         t('Order placed successfully!', 'অর্ডার সফলভাবে সম্পন্ন হয়েছে!')
       );

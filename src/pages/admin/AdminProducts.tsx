@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Upload } from 'lucide-react';
@@ -30,10 +31,20 @@ interface Product {
   meta_title: string | null;
   meta_description: string | null;
   meta_keywords: string | null;
+  category_id: string | null;
+  affiliate_commission: number | null;
+}
+
+interface Category {
+  id: string;
+  name_en: string;
+  name_bn: string;
+  parent_id: string | null;
 }
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -56,13 +67,24 @@ export default function AdminProducts() {
     meta_title: '',
     meta_description: '',
     meta_keywords: '',
+    category_id: '',
+    affiliate_commission: 0,
   });
 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .order('display_order');
+    setCategories(data || []);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -140,6 +162,8 @@ export default function AdminProducts() {
         meta_title: formData.meta_title || null,
         meta_description: formData.meta_description || null,
         meta_keywords: formData.meta_keywords || null,
+        category_id: formData.category_id || null,
+        affiliate_commission: formData.affiliate_commission > 0 ? formData.affiliate_commission : null,
       };
 
       if (editingProduct) {
@@ -205,6 +229,8 @@ export default function AdminProducts() {
       meta_title: product.meta_title || '',
       meta_description: product.meta_description || '',
       meta_keywords: product.meta_keywords || '',
+      category_id: product.category_id || '',
+      affiliate_commission: product.affiliate_commission || 0,
     });
     setDialogOpen(true);
   };
@@ -227,10 +253,17 @@ export default function AdminProducts() {
       meta_title: '',
       meta_description: '',
       meta_keywords: '',
+      category_id: '',
+      affiliate_commission: 0,
     });
     setEditingProduct(null);
     setImageFiles(null);
   };
+
+  // Get parent categories (no parent_id)
+  const parentCategories = categories.filter(c => !c.parent_id);
+  // Get subcategories for a given parent
+  const getSubcategories = (parentId: string) => categories.filter(c => c.parent_id === parentId);
 
   return (
     <AdminLayout>
@@ -345,6 +378,55 @@ export default function AdminProducts() {
                   <p className="text-sm text-muted-foreground mt-1">
                     উদাহরণ: S, M, L, XL অথবা 38, 39, 40, 41
                   </p>
+                </div>
+
+                {/* Category Selection */}
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-3">ক্যাটাগরি</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>ক্যাটাগরি নির্বাচন করুন</Label>
+                      <Select 
+                        value={formData.category_id} 
+                        onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {parentCategories.map((category) => (
+                            <div key={category.id}>
+                              <SelectItem value={category.id} className="font-semibold">
+                                {category.name_bn}
+                              </SelectItem>
+                              {getSubcategories(category.id).map((sub) => (
+                                <SelectItem key={sub.id} value={sub.id} className="pl-6">
+                                  ↳ {sub.name_bn}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Affiliate Commission */}
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-3">এফিলিয়েট সেটিংস</h3>
+                  <div>
+                    <Label>এফিলিয়েট কমিশন (টাকা)</Label>
+                    <Input
+                      type="number"
+                      value={formData.affiliate_commission}
+                      onChange={(e) => setFormData({ ...formData, affiliate_commission: Number(e.target.value) })}
+                      placeholder="0"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      প্রতিটি বিক্রিতে রেফারার কত টাকা পাবে
+                    </p>
+                  </div>
                 </div>
 
                 <div className="border-t pt-4">

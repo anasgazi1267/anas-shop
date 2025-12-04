@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_earnings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_earnings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_links: {
+        Row: {
+          clicks: number | null
+          created_at: string
+          id: string
+          product_id: string
+          referral_code: string
+          user_id: string
+        }
+        Insert: {
+          clicks?: number | null
+          created_at?: string
+          id?: string
+          product_id: string
+          referral_code: string
+          user_id: string
+        }
+        Update: {
+          clicks?: number | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          referral_code?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banners: {
         Row: {
           created_at: string
@@ -390,6 +470,7 @@ export type Database = {
       products: {
         Row: {
           advance_amount: number | null
+          affiliate_commission: number | null
           category_id: string | null
           created_at: string
           description_bn: string | null
@@ -414,6 +495,7 @@ export type Database = {
         }
         Insert: {
           advance_amount?: number | null
+          affiliate_commission?: number | null
           category_id?: string | null
           created_at?: string
           description_bn?: string | null
@@ -438,6 +520,7 @@ export type Database = {
         }
         Update: {
           advance_amount?: number | null
+          affiliate_commission?: number | null
           category_id?: string | null
           created_at?: string
           description_bn?: string | null
@@ -609,6 +692,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      withdrawal_requests: {
+        Row: {
+          account_number: string
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          payment_method: string
+          processed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payment_method: string
+          processed_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_method?: string
+          processed_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
