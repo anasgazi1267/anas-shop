@@ -27,6 +27,9 @@ import AdminBanners from "./pages/admin/AdminBanners";
 import AdminProductRequests from "./pages/admin/AdminProductRequests";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProductAnalytics from "./pages/admin/AdminProductAnalytics";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import AdminSocialLinks from "./pages/admin/AdminSocialLinks";
+import AffiliateDashboard from "./pages/AffiliateDashboard";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +57,7 @@ const App = () => (
                     <Route path="/request-product" element={<RequestProduct />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
+                    <Route path="/affiliate" element={<AffiliateDashboard />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -65,6 +69,8 @@ const App = () => (
               <Route path="/admin/product-requests" element={<ProtectedAdminRoute><AdminProductRequests /></ProtectedAdminRoute>} />
               <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
               <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminProductAnalytics /></ProtectedAdminRoute>} />
+              <Route path="/admin/withdrawals" element={<ProtectedAdminRoute><AdminWithdrawals /></ProtectedAdminRoute>} />
+              <Route path="/admin/social-links" element={<ProtectedAdminRoute><AdminSocialLinks /></ProtectedAdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

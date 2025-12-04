@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingCart, Package, CreditCard, Share2 } from 'lucide-react';
+import { ShoppingCart, Package, CreditCard, Share2, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Product {
@@ -30,15 +31,20 @@ interface Product {
   meta_title: string | null;
   meta_description: string | null;
   meta_keywords: string | null;
+  affiliate_commission: number | null;
 }
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
+  const { user } = useUserAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  const refCode = searchParams.get('ref');
 
   useEffect(() => {
     if (id) {
@@ -94,6 +100,54 @@ export default function ProductDetail() {
       }
     } catch (error) {
       console.error('Error sharing:', error);
+    }
+  };
+
+  const handleAffiliateShare = async () => {
+    if (!user) {
+      toast.error(t('Please login to get affiliate link', 'এফিলিয়েট লিংক পেতে লগইন করুন'));
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      // Check if affiliate link already exists
+      const { data: existingLink } = await supabase
+        .from('affiliate_links')
+        .select('referral_code')
+        .eq('user_id', user.id)
+        .eq('product_id', id)
+        .single();
+
+      let referralCode = existingLink?.referral_code;
+
+      if (!referralCode) {
+        // Generate new referral code
+        referralCode = Math.random().toString(36).substring(2, 10);
+        
+        const { error } = await supabase.from('affiliate_links').insert({
+          user_id: user.id,
+          product_id: id,
+          referral_code: referralCode
+        });
+
+        if (error) throw error;
+      }
+
+      const affiliateUrl = `${window.location.origin}/product/${id}?ref=${referralCode}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: name,
+          text: `${name} - ৳${displayPrice.toLocaleString()}`,
+          url: affiliateUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(affiliateUrl);
+        toast.success(t('Affiliate link copied!', 'এফিলিয়েট লিংক কপি হয়েছে!'));
+      }
+    } catch (error: any) {
+      toast.error('সমস্যা হয়েছে: ' + error.message);
     }
   };
 
@@ -214,7 +268,7 @@ export default function ProductDetail() {
                 )}
               </div>
 
-              {product.stock > 0 ? (
+            {product.stock > 0 ? (
                 <Badge variant="outline" className="text-green-600 border-green-600">
                   <Package className="h-4 w-4 mr-1" />
                   {t('In Stock', 'স্টক আছে')} ({product.stock})
@@ -224,6 +278,42 @@ export default function ProductDetail() {
                   {t('Out of Stock', 'স্টক আউট')}
                 </Badge>
               )}
+            </div>
+
+            {/* Order and Share buttons - above description */}
+            <div className="space-y-3">
+              <Button
+                size="lg"
+                className="w-full"
+                disabled={product.stock <= 0}
+                onClick={() => navigate(`/order/${product.id}${refCode ? `?ref=${refCode}` : ''}`)}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                {t('Order Now', 'অর্ডার করুন')}
+              </Button>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  {t('Share', 'শেয়ার')}
+                </Button>
+                
+                {product.affiliate_commission && product.affiliate_commission > 0 && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleAffiliateShare}
+                    className="text-green-600 border-green-600 hover:bg-green-50"
+                  >
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    {t('Earn', 'আয় করুন')} ৳{product.affiliate_commission}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {description && (
@@ -265,28 +355,6 @@ export default function ProductDetail() {
                 </div>
               </div>
             )}
-
-            <div className="space-y-3">
-              <Button
-                size="lg"
-                className="w-full"
-                disabled={product.stock <= 0}
-                onClick={() => navigate(`/order/${product.id}`)}
-              >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                {t('Order Now', 'অর্ডার করুন')}
-              </Button>
-              
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full"
-                onClick={handleShare}
-              >
-                <Share2 className="mr-2 h-5 w-5" />
-                {t('Share Product', 'শেয়ার করুন')}
-              </Button>
-            </div>
           </div>
         </div>
       </main>

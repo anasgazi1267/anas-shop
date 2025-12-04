@@ -60,6 +60,23 @@ export default function AdminOrders() {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // If order is cancelled, update affiliate earnings
+      if (newStatus === 'cancelled') {
+        await supabase
+          .from('affiliate_earnings')
+          .update({ status: 'cancelled' })
+          .eq('order_id', orderId);
+      }
+
+      // If order is delivered, confirm affiliate earnings
+      if (newStatus === 'delivered') {
+        await supabase
+          .from('affiliate_earnings')
+          .update({ status: 'confirmed' })
+          .eq('order_id', orderId);
+      }
+
       toast.success('অর্ডার স্ট্যাটাস আপডেট হয়েছে');
       fetchOrders();
     } catch (error: any) {
@@ -88,6 +105,7 @@ export default function AdminOrders() {
       processing: 'প্রক্রিয়াধীন',
       shipped: 'পাঠানো হয়েছে',
       delivered: 'ডেলিভারড',
+      cancelled: 'ক্যান্সেল',
     };
     return statusMap[status] || 'অজানা';
   };

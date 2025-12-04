@@ -11,7 +11,9 @@ import {
   Users,
   Image,
   FileText,
-  BarChart3
+  BarChart3,
+  Wallet,
+  Share2
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -34,6 +36,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { path: '/admin/orders', icon: ShoppingCart, label: 'অর্ডার' },
     { path: '/admin/categories', icon: FileText, label: 'ক্যাটাগরি' },
     { path: '/admin/banners', icon: Image, label: 'ব্যানার' },
+    { path: '/admin/withdrawals', icon: Wallet, label: 'উইথড্রয়াল' },
+    { path: '/admin/social-links', icon: Share2, label: 'সোশ্যাল লিংক' },
     { path: '/admin/product-requests', icon: Users, label: 'প্রোডাক্ট রিকোয়েস্ট' },
     { path: '/admin/analytics', icon: BarChart3, label: 'এনালিটিক্স' },
     { path: '/admin/settings', icon: Settings, label: 'সেটিংস' },
