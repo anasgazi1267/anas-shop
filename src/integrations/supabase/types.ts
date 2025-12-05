@@ -19,8 +19,10 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          is_referral_commission: boolean | null
           order_id: string
           product_id: string
+          referrer_id: string | null
           status: string
           user_id: string
         }
@@ -28,8 +30,10 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          is_referral_commission?: boolean | null
           order_id: string
           product_id: string
+          referrer_id?: string | null
           status?: string
           user_id: string
         }
@@ -37,8 +41,10 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          is_referral_commission?: boolean | null
           order_id?: string
           product_id?: string
+          referrer_id?: string | null
           status?: string
           user_id?: string
         }
@@ -299,11 +305,13 @@ export type Database = {
           payment_screenshot: string | null
           product_ids: string[]
           product_sizes: Json | null
+          referral_code: string | null
           status: string
           total_amount: number
           tracking_id: string
           transaction_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           advance_amount?: number | null
@@ -320,11 +328,13 @@ export type Database = {
           payment_screenshot?: string | null
           product_ids: string[]
           product_sizes?: Json | null
+          referral_code?: string | null
           status?: string
           total_amount: number
           tracking_id: string
           transaction_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           advance_amount?: number | null
@@ -341,11 +351,13 @@ export type Database = {
           payment_screenshot?: string | null
           product_ids?: string[]
           product_sizes?: Json | null
+          referral_code?: string | null
           status?: string
           total_amount?: number
           tracking_id?: string
           transaction_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -363,6 +375,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_methods: {
+        Row: {
+          account_number: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          name_bn: string
+        }
+        Insert: {
+          account_number?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          name_bn: string
+        }
+        Update: {
+          account_number?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          name_bn?: string
+        }
+        Relationships: []
       }
       product_requests: {
         Row: {
@@ -616,6 +661,30 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: string
+        }
+        Relationships: []
+      }
+      user_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }
