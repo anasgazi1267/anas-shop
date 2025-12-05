@@ -24,7 +24,9 @@ import {
   Clock,
   Check,
   X,
-  XCircle
+  XCircle,
+  Users,
+  Share2
 } from 'lucide-react';
 
 interface AffiliateEarning {
@@ -33,6 +35,7 @@ interface AffiliateEarning {
   status: string;
   created_at: string;
   product_id: string;
+  is_referral_commission: boolean;
 }
 
 interface WithdrawalRequest {
@@ -50,41 +53,67 @@ interface AffiliateLink {
   product_id: string;
   referral_code: string;
   clicks: number;
-  product_name?: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  name: string;
+  name_bn: string;
+  logo_url: string | null;
+  is_active: boolean;
 }
 
 export default function AffiliateDashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useUserAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState<AffiliateEarning[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [affiliateLinks, setAffiliateLinks] = useState<AffiliateLink[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [referredUsers, setReferredUsers] = useState<number>(0);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [minWithdrawal, setMinWithdrawal] = useState(500);
+  const [userReferralCode, setUserReferralCode] = useState('');
 
   useEffect(() => {
     if (user) {
       fetchData();
+      generateReferralCode();
     }
   }, [user]);
+
+  const generateReferralCode = () => {
+    if (user) {
+      // Generate unique referral code from user ID
+      const code = `REF${user.id.substring(0, 8).toUpperCase()}`;
+      setUserReferralCode(code);
+    }
+  };
 
   const fetchData = async () => {
     if (!user) return;
 
     try {
-      const [earningsRes, withdrawalsRes, linksRes] = await Promise.all([
+      const [earningsRes, withdrawalsRes, linksRes, methodsRes, settingsRes, referralsRes] = await Promise.all([
         supabase.from('affiliate_earnings').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('withdrawal_requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('affiliate_links').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+        supabase.from('affiliate_links').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('payment_methods').select('*').eq('is_active', true).order('display_order'),
+        supabase.from('settings').select('*').eq('key', 'minimum_withdrawal').maybeSingle(),
+        supabase.from('user_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', user.id)
       ]);
 
       if (earningsRes.data) setEarnings(earningsRes.data);
       if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data);
       if (linksRes.data) setAffiliateLinks(linksRes.data);
+      if (methodsRes.data) setPaymentMethods(methodsRes.data);
+      if (settingsRes.data) setMinWithdrawal(Number(settingsRes.data.value) || 500);
+      setReferredUsers(referralsRes.count || 0);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -98,6 +127,11 @@ export default function AffiliateDashboard() {
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t('Enter valid amount', 'সঠিক পরিমাণ দিন'));
+      return;
+    }
+
+    if (amount < minWithdrawal) {
+      toast.error(t(`Minimum withdrawal is ৳${minWithdrawal}`, `সর্বনিম্ন উইথড্রয়াল ৳${minWithdrawal}`));
       return;
     }
 
@@ -132,7 +166,13 @@ export default function AffiliateDashboard() {
     }
   };
 
-  const copyLink = (code: string) => {
+  const copyReferralLink = () => {
+    const url = `${window.location.origin}?ref=${userReferralCode}`;
+    navigator.clipboard.writeText(url);
+    toast.success(t('Referral link copied!', 'রেফারেল লিংক কপি হয়েছে!'));
+  };
+
+  const copyProductLink = (code: string) => {
     const url = `${window.location.origin}?ref=${code}`;
     navigator.clipboard.writeText(url);
     toast.success(t('Link copied!', 'লিংক কপি হয়েছে!'));
@@ -177,6 +217,8 @@ export default function AffiliateDashboard() {
 
   // Calculate totals - exclude cancelled orders
   const totalEarnings = earnings.filter(e => e.status !== 'cancelled').reduce((sum, e) => sum + e.amount, 0);
+  const directEarnings = earnings.filter(e => e.status !== 'cancelled' && !e.is_referral_commission).reduce((sum, e) => sum + e.amount, 0);
+  const referralEarnings = earnings.filter(e => e.status !== 'cancelled' && e.is_referral_commission).reduce((sum, e) => sum + e.amount, 0);
   const pendingEarnings = earnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0);
   const withdrawnAmount = withdrawals.filter(w => w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').reduce((sum, w) => sum + w.amount, 0);
@@ -193,7 +235,39 @@ export default function AffiliateDashboard() {
           <p className="text-muted-foreground mt-1">{t('Track your earnings and referrals', 'আপনার আয় এবং রেফারেল ট্র্যাক করুন')}</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
+        {/* Referral Link Card */}
+        <Card className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-primary" />
+                  {t('Your Referral Link', 'আপনার রেফারেল লিংক')}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('Share this link to invite friends and earn 5% commission from their sales!', 'এই লিংক শেয়ার করে বন্ধুদের আমন্ত্রণ জানান এবং তাদের বিক্রি থেকে ৫% কমিশন পান!')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <code className="bg-background px-3 py-2 rounded border text-sm">
+                  {`${window.location.origin}?ref=${userReferralCode}`}
+                </code>
+                <Button onClick={copyReferralLink}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  {t('Copy', 'কপি')}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-primary/20">
+              <p className="text-sm">
+                <Users className="h-4 w-4 inline mr-1" />
+                {t('Referred Users:', 'রেফার করা ইউজার:')} <strong>{referredUsers}</strong>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('Total Earnings', 'মোট আয়')}</CardTitle>
@@ -206,21 +280,31 @@ export default function AffiliateDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{t('Available Balance', 'উত্তোলনযোগ্য')}</CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">{t('Direct Sales', 'ডাইরেক্ট বিক্রি')}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">৳{availableBalance.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-blue-600">৳{directEarnings.toLocaleString()}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{t('Pending', 'পেন্ডিং')}</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">{t('Referral Earnings', 'রেফারেল আয়')}</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">৳{pendingEarnings.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-purple-600">৳{referralEarnings.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">{t('Available Balance', 'উত্তোলনযোগ্য')}</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">৳{availableBalance.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -238,7 +322,7 @@ export default function AffiliateDashboard() {
         <div className="mb-6">
           <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
             <DialogTrigger asChild>
-              <Button disabled={availableBalance <= 0}>
+              <Button disabled={availableBalance < minWithdrawal}>
                 <Wallet className="h-4 w-4 mr-2" />
                 {t('Withdraw', 'উত্তোলন করুন')}
               </Button>
@@ -251,6 +335,9 @@ export default function AffiliateDashboard() {
                 <div className="p-4 bg-accent rounded-lg">
                   <p className="text-sm text-muted-foreground">{t('Available Balance', 'উত্তোলনযোগ্য')}</p>
                   <p className="text-2xl font-bold text-primary">৳{availableBalance.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t(`Minimum withdrawal: ৳${minWithdrawal}`, `সর্বনিম্ন উইথড্রয়াল: ৳${minWithdrawal}`)}
+                  </p>
                 </div>
                 <div>
                   <Label>{t('Amount', 'পরিমাণ')}</Label>
@@ -258,7 +345,7 @@ export default function AffiliateDashboard() {
                     type="number"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="৳0"
+                    placeholder={`৳${minWithdrawal}`}
                   />
                 </div>
                 <div>
@@ -268,9 +355,14 @@ export default function AffiliateDashboard() {
                       <SelectValue placeholder={t('Select method', 'মেথড নির্বাচন করুন')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="bkash">বিকাশ</SelectItem>
-                      <SelectItem value="nagad">নগদ</SelectItem>
-                      <SelectItem value="rocket">রকেট</SelectItem>
+                      {paymentMethods.map((method) => (
+                        <SelectItem key={method.id} value={method.name}>
+                          <div className="flex items-center gap-2">
+                            {method.logo_url && <img src={method.logo_url} alt={method.name} className="h-4 w-4" />}
+                            {language === 'bn' ? method.name_bn : method.name}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -313,6 +405,9 @@ export default function AffiliateDashboard() {
                       <p className="text-sm text-muted-foreground">
                         {new Date(earning.created_at).toLocaleDateString('bn-BD')}
                       </p>
+                      <Badge variant={earning.is_referral_commission ? 'secondary' : 'default'} className="mt-1">
+                        {earning.is_referral_commission ? t('Referral', 'রেফারেল') : t('Direct', 'ডাইরেক্ট')}
+                      </Badge>
                     </div>
                     {getStatusBadge(earning.status)}
                   </CardContent>
@@ -339,7 +434,7 @@ export default function AffiliateDashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{link.clicks} {t('clicks', 'ক্লিক')}</Badge>
-                        <Button size="sm" variant="outline" onClick={() => copyLink(link.referral_code)}>
+                        <Button size="sm" variant="outline" onClick={() => copyProductLink(link.referral_code)}>
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>

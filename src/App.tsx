@@ -29,6 +29,8 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProductAnalytics from "./pages/admin/AdminProductAnalytics";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 import AdminSocialLinks from "./pages/admin/AdminSocialLinks";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPaymentMethods from "./pages/admin/AdminPaymentMethods";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
 import NotFound from "./pages/NotFound";
@@ -71,6 +73,8 @@ const App = () => (
               <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminProductAnalytics /></ProtectedAdminRoute>} />
               <Route path="/admin/withdrawals" element={<ProtectedAdminRoute><AdminWithdrawals /></ProtectedAdminRoute>} />
               <Route path="/admin/social-links" element={<ProtectedAdminRoute><AdminSocialLinks /></ProtectedAdminRoute>} />
+              <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
+              <Route path="/admin/payment-methods" element={<ProtectedAdminRoute><AdminPaymentMethods /></ProtectedAdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

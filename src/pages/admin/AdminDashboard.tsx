@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { DollarSign, Package, ShoppingCart, Users } from 'lucide-react';
+import { DollarSign, Package, ShoppingCart, Users, TrendingUp, Wallet, Clock, XCircle } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -10,6 +10,12 @@ export default function AdminDashboard() {
     totalRevenue: 0,
     totalProducts: 0,
     pendingOrders: 0,
+    totalCommissions: 0,
+    pendingCommissions: 0,
+    pendingWithdrawals: 0,
+    totalWithdrawn: 0,
+    totalUsers: 0,
+    cancelledOrders: 0,
   });
 
   useEffect(() => {
@@ -18,26 +24,54 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // Fetch orders
       const { data: orders } = await supabase
         .from('orders')
         .select('total_amount, status');
 
-      // Fetch products
       const { data: products } = await supabase
         .from('products')
         .select('id');
 
+      const { data: earnings } = await supabase
+        .from('affiliate_earnings')
+        .select('amount, status');
+
+      const { data: withdrawals } = await supabase
+        .from('withdrawal_requests')
+        .select('amount, status');
+
+      const { count: usersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
       const totalOrders = orders?.length || 0;
-      const totalRevenue = orders?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+      const cancelledOrders = orders?.filter(o => o.status === 'cancelled').length || 0;
+      const totalRevenue = orders?.filter(o => o.status !== 'cancelled')
+        .reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
       const totalProducts = products?.length || 0;
       const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
+
+      const totalCommissions = earnings?.filter(e => e.status !== 'cancelled')
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+      const pendingCommissions = earnings?.filter(e => e.status === 'pending')
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      const pendingWithdrawals = withdrawals?.filter(w => w.status === 'pending')
+        .reduce((sum, w) => sum + Number(w.amount), 0) || 0;
+      const totalWithdrawn = withdrawals?.filter(w => w.status === 'approved')
+        .reduce((sum, w) => sum + Number(w.amount), 0) || 0;
 
       setStats({
         totalOrders,
         totalRevenue,
         totalProducts,
         pendingOrders,
+        totalCommissions,
+        pendingCommissions,
+        pendingWithdrawals,
+        totalWithdrawn,
+        totalUsers: usersCount || 0,
+        cancelledOrders,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -67,9 +101,37 @@ export default function AdminDashboard() {
       bg: 'bg-purple-100 dark:bg-purple-950',
     },
     {
+      title: 'মোট ইউজার',
+      value: stats.totalUsers.toString(),
+      icon: Users,
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-100 dark:bg-indigo-950',
+    },
+    {
       title: 'পেন্ডিং অর্ডার',
       value: stats.pendingOrders.toString(),
-      icon: Users,
+      icon: Clock,
+      color: 'text-yellow-600',
+      bg: 'bg-yellow-100 dark:bg-yellow-950',
+    },
+    {
+      title: 'ক্যান্সেল অর্ডার',
+      value: stats.cancelledOrders.toString(),
+      icon: XCircle,
+      color: 'text-red-600',
+      bg: 'bg-red-100 dark:bg-red-950',
+    },
+    {
+      title: 'মোট কমিশন',
+      value: `৳${stats.totalCommissions.toLocaleString()}`,
+      icon: TrendingUp,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-100 dark:bg-emerald-950',
+    },
+    {
+      title: 'পেন্ডিং উইথড্রয়াল',
+      value: `৳${stats.pendingWithdrawals.toLocaleString()}`,
+      icon: Wallet,
       color: 'text-orange-600',
       bg: 'bg-orange-100 dark:bg-orange-950',
     },
