@@ -4,7 +4,7 @@ import { Footer } from '@/components/Footer';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Languages, Settings } from 'lucide-react';
+import { Languages, Settings, DollarSign, Wallet, Link2, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,22 @@ import { toast } from 'sonner';
 import { Navigate, Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface Withdrawal {
+  id: string;
+  amount: number;
+  status: string;
+  payment_method: string;
+  created_at: string;
+}
+
+interface Earning {
+  id: string;
+  amount: number;
+  status: string;
+  is_referral_commission: boolean;
+  created_at: string;
+}
+
 export default function UserDashboard() {
   const { user, loading: authLoading } = useUserAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -25,8 +41,11 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [divisions, setDivisions] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
+  const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -37,15 +56,19 @@ export default function UserDashboard() {
   const fetchData = async () => {
     setLoading(true);
     
-    const [profileRes, ordersRes, divisionsRes] = await Promise.all([
+    const [profileRes, ordersRes, divisionsRes, earningsRes, withdrawalsRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user!.id).maybeSingle(),
-      supabase.from('orders').select('*').eq('customer_phone', user!.email).order('created_at', { ascending: false }),
-      supabase.from('divisions').select('*').order('name_en')
+      supabase.from('orders').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('divisions').select('*').order('name_en'),
+      supabase.from('affiliate_earnings').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('withdrawal_requests').select('*').eq('user_id', user!.id).order('created_at', { ascending: false })
     ]);
 
     if (profileRes.data) setProfile(profileRes.data);
     if (ordersRes.data) setOrders(ordersRes.data);
     if (divisionsRes.data) setDivisions(divisionsRes.data);
+    if (earningsRes.data) setEarnings(earningsRes.data);
+    if (withdrawalsRes.data) setWithdrawals(withdrawalsRes.data);
 
     setLoading(false);
   };
@@ -93,6 +116,26 @@ export default function UserDashboard() {
     setSaving(false);
   };
 
+  const referralLink = user ? `${window.location.origin}/auth?ref=${user.id.slice(0, 8)}` : '';
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast.success(t('Referral link copied!', 'রেফারেল লিংক কপি হয়েছে!'));
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Calculate stats
+  const totalEarnings = earnings
+    .filter(e => e.status !== 'cancelled')
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+  
+  const totalWithdrawn = withdrawals
+    .filter(w => w.status === 'approved')
+    .reduce((sum, w) => sum + Number(w.amount), 0);
+  
+  const availableBalance = totalEarnings - totalWithdrawn;
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -119,10 +162,22 @@ export default function UserDashboard() {
       processing: 'default',
       shipped: 'default',
       delivered: 'outline',
-      cancelled: 'destructive'
+      cancelled: 'destructive',
+      approved: 'default',
+      rejected: 'destructive'
     };
 
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
+    const labels: Record<string, string> = {
+      pending: t('Pending', 'পেন্ডিং'),
+      processing: t('Processing', 'প্রসেসিং'),
+      shipped: t('Shipped', 'শিপড'),
+      delivered: t('Delivered', 'ডেলিভারড'),
+      cancelled: t('Cancelled', 'বাতিল'),
+      approved: t('Approved', 'অনুমোদিত'),
+      rejected: t('Rejected', 'বাতিল')
+    };
+
+    return <Badge variant={variants[status] || 'default'}>{labels[status] || status}</Badge>;
   };
 
   return (
@@ -140,23 +195,88 @@ export default function UserDashboard() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <DollarSign className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-muted-foreground">{t('Total Earnings', 'মোট আয়')}</span>
+              </div>
+              <p className="text-2xl font-bold text-green-600">৳{totalEarnings.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Wallet className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-muted-foreground">{t('Available', 'বর্তমান')}</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">৳{availableBalance.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Package className="h-4 w-4 text-purple-600" />
+                <span className="text-sm text-muted-foreground">{t('Orders', 'অর্ডার')}</span>
+              </div>
+              <p className="text-2xl font-bold text-purple-600">{orders.length}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Link2 className="h-4 w-4 text-orange-600" />
+                <span className="text-sm text-muted-foreground">{t('Withdrawals', 'উত্তোলন')}</span>
+              </div>
+              <p className="text-2xl font-bold text-orange-600">{withdrawals.length}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Referral Link */}
+        <Card className="mb-8">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              {t('Your Referral Link', 'আপনার রেফারেল লিংক')}
+            </CardTitle>
+            <CardDescription>
+              {t('Share this link to earn 5% commission on referral sales', 'এই লিংক শেয়ার করে রেফারেল বিক্রিতে ৫% কমিশন পান')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input value={referralLink} readOnly className="font-mono text-sm" />
+              <Button onClick={copyReferralLink} variant="outline">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
-              {t('Profile', 'প্রোফাইল')}
+              <span className="hidden sm:inline">{t('Profile', 'প্রোফাইল')}</span>
             </TabsTrigger>
             <TabsTrigger value="orders">
               <Package className="h-4 w-4 mr-2" />
-              {t('Orders', 'অর্ডার')}
+              <span className="hidden sm:inline">{t('Orders', 'অর্ডার')}</span>
             </TabsTrigger>
-            <TabsTrigger value="wishlist">
-              <Heart className="h-4 w-4 mr-2" />
-              {t('Wishlist', 'উইশলিস্ট')}
+            <TabsTrigger value="earnings">
+              <DollarSign className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t('Earnings', 'আয়')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="withdrawals">
+              <Wallet className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t('Withdrawals', 'উত্তোলন')}</span>
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings className="h-4 w-4 mr-2" />
-              {t('Settings', 'সেটিংস')}
+              <span className="hidden sm:inline">{t('Settings', 'সেটিংস')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -297,18 +417,89 @@ export default function UserDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="wishlist">
+          <TabsContent value="earnings">
             <Card>
               <CardHeader>
-                <CardTitle>{t('My Wishlist', 'আমার উইশলিস্ট')}</CardTitle>
+                <CardTitle>{t('My Earnings', 'আমার আয়')}</CardTitle>
                 <CardDescription>
-                  {t('Your favorite products', 'আপনার পছন্দের পণ্য')}
+                  {t('View your affiliate and referral earnings', 'আপনার এফিলিয়েট ও রেফারেল আয় দেখুন')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-muted-foreground">
-                  {t('Wishlist feature coming soon', 'উইশলিস্ট ফিচার শীঘ্রই আসছে')}
-                </p>
+                {earnings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">{t('No earnings yet', 'এখনও কোন আয় নেই')}</p>
+                    <Link to="/affiliate">
+                      <Button variant="outline" className="mt-4">
+                        {t('Start Earning', 'আয় শুরু করুন')}
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {earnings.map((earning) => (
+                      <div key={earning.id} className="border rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">৳{earning.amount.toLocaleString()}</p>
+                            <Badge variant={earning.is_referral_commission ? 'secondary' : 'default'}>
+                              {earning.is_referral_commission ? t('Referral', 'রেফারেল') : t('Direct', 'ডাইরেক্ট')}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(earning.created_at).toLocaleDateString('bn-BD')}
+                          </p>
+                        </div>
+                        {getStatusBadge(earning.status)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="withdrawals">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('Withdrawal History', 'উত্তোলন ইতিহাস')}</CardTitle>
+                <CardDescription>
+                  {t('View your withdrawal requests', 'আপনার উত্তোলন অনুরোধ দেখুন')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">{t('Available Balance', 'বর্তমান ব্যালেন্স')}</p>
+                  <p className="text-3xl font-bold text-primary">৳{availableBalance.toLocaleString()}</p>
+                  <Link to="/affiliate">
+                    <Button className="mt-4" disabled={availableBalance <= 0}>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      {t('Withdraw', 'উত্তোলন করুন')}
+                    </Button>
+                  </Link>
+                </div>
+
+                {withdrawals.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">{t('No withdrawals yet', 'এখনও কোন উত্তোলন নেই')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {withdrawals.map((withdrawal) => (
+                      <div key={withdrawal.id} className="border rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">৳{withdrawal.amount.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {withdrawal.payment_method} • {new Date(withdrawal.created_at).toLocaleDateString('bn-BD')}
+                          </p>
+                        </div>
+                        {getStatusBadge(withdrawal.status)}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
