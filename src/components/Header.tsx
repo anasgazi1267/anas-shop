@@ -1,4 +1,4 @@
-import { Search, Menu, User, LogOut, ShoppingCart } from 'lucide-react';
+import { Search, Menu, User, LogOut, ShoppingCart, Wallet, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
@@ -56,10 +56,17 @@ export function Header() {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="cursor-pointer">
+                      <User className="h-4 w-4 mr-2" />
                       {t('My Dashboard', 'আমার ড্যাশবোর্ড')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/affiliate" className="cursor-pointer">
+                      <Link2 className="h-4 w-4 mr-2" />
+                      {t('Affiliate', 'এফিলিয়েট')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -120,6 +127,26 @@ export function Header() {
                 >
                   {t('Request', 'রিকোয়েস্ট')}
                 </Link>
+                {user && (
+                  <>
+                    <Link 
+                      to="/dashboard" 
+                      className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b flex items-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      {t('My Dashboard', 'আমার ড্যাশবোর্ড')}
+                    </Link>
+                    <Link 
+                      to="/affiliate" 
+                      className="text-foreground hover:text-primary transition-colors font-medium py-2 border-b flex items-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Link2 className="h-4 w-4 mr-2" />
+                      {t('Affiliate', 'এফিলিয়েট')}
+                    </Link>
+                  </>
+                )}
                 {user ? (
                   <Button 
                     variant="outline" 

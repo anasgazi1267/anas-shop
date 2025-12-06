@@ -29,6 +29,11 @@ interface UserProfile {
   created_at: string | null;
 }
 
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 interface UserData extends UserProfile {
   email: string;
   totalEarnings: number;
@@ -125,7 +130,7 @@ export default function AdminUsers() {
 
           return {
             ...profile,
-            email: profile.id, // We'll get this from auth later
+            email: profile.phone || profile.full_name || profile.id.slice(0, 8),
             totalEarnings,
             totalWithdrawals,
             ordersCount: ordersCount || 0,
@@ -227,6 +232,7 @@ export default function AdminUsers() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ইউজার ID</TableHead>
                   <TableHead>নাম</TableHead>
                   <TableHead>ফোন</TableHead>
                   <TableHead>মোট আয়</TableHead>
@@ -239,19 +245,20 @@ export default function AdminUsers() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       লোড হচ্ছে...
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       কোন ইউজার পাওয়া যায়নি
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id}>
+                      <TableCell className="font-mono text-xs">{user.id.slice(0, 8)}...</TableCell>
                       <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
                       <TableCell>{user.phone || 'N/A'}</TableCell>
                       <TableCell className="text-green-600 font-medium">৳{user.totalEarnings.toLocaleString()}</TableCell>
