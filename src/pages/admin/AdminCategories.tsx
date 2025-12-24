@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, ChevronRight, FolderOpen, Folder } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Category {
   id: string;
@@ -15,6 +17,8 @@ interface Category {
   name_bn: string;
   slug: string;
   image_url: string | null;
+  parent_id: string | null;
+  display_order: number | null;
 }
 
 export default function AdminCategories() {
@@ -26,6 +30,7 @@ export default function AdminCategories() {
     name_en: '',
     name_bn: '',
     image_url: '',
+    parent_id: '',
   });
   const [uploading, setUploading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -49,6 +54,19 @@ export default function AdminCategories() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get parent categories (categories without parent_id)
+  const parentCategories = categories.filter(c => !c.parent_id);
+  
+  // Get subcategories for a parent
+  const getSubcategories = (parentId: string) => {
+    return categories.filter(c => c.parent_id === parentId);
+  };
+
+  // Count products in category (placeholder - could be implemented with a separate query)
+  const getCategoryProductCount = (categoryId: string) => {
+    return 0; // This would need a separate query
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,8 +121,10 @@ export default function AdminCategories() {
       const imageUrl = await uploadImage();
 
       const categoryData = {
-        ...formData,
+        name_en: formData.name_en,
+        name_bn: formData.name_bn,
         image_url: imageUrl,
+        parent_id: formData.parent_id || null,
         slug,
       };
 
@@ -134,6 +154,13 @@ export default function AdminCategories() {
   };
 
   const handleDelete = async (id: string) => {
+    // Check if category has subcategories
+    const hasSubcategories = categories.some(c => c.parent_id === id);
+    if (hasSubcategories) {
+      toast.error('প্রথমে সাবক্যাটাগরিগুলো ডিলিট করুন');
+      return;
+    }
+
     if (!confirm('আপনি কি নিশ্চিত?')) return;
 
     try {
@@ -156,6 +183,7 @@ export default function AdminCategories() {
       name_en: category.name_en,
       name_bn: category.name_bn,
       image_url: category.image_url || '',
+      parent_id: category.parent_id || '',
     });
     setImagePreview(category.image_url || '');
     setDialogOpen(true);
@@ -166,10 +194,94 @@ export default function AdminCategories() {
       name_en: '',
       name_bn: '',
       image_url: '',
+      parent_id: '',
     });
     setEditingCategory(null);
     setImageFile(null);
     setImagePreview('');
+  };
+
+  // Render subcategory item
+  const renderSubcategory = (category: Category) => (
+    <div key={category.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg ml-6 border-l-2 border-primary/30">
+      <div className="flex items-center gap-3">
+        {category.image_url ? (
+          <img src={category.image_url} alt={category.name_bn} className="w-10 h-10 object-cover rounded" />
+        ) : (
+          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+            <Folder className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+        <div>
+          <p className="font-medium">{category.name_bn}</p>
+          <p className="text-xs text-muted-foreground">{category.name_en}</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="ghost" size="sm" onClick={() => handleEdit(category)}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(category.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Render parent category with subcategories
+  const renderParentCategory = (category: Category) => {
+    const subcategories = getSubcategories(category.id);
+    
+    return (
+      <Card key={category.id} className="overflow-hidden">
+        <CardHeader className="p-4 bg-gradient-to-r from-primary/10 to-primary/5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {category.image_url ? (
+                <img src={category.image_url} alt={category.name_bn} className="w-16 h-16 object-cover rounded-lg" />
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
+                  <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {category.name_bn}
+                  {subcategories.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {subcategories.length} সাবক্যাটাগরি
+                    </Badge>
+                  )}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">{category.name_en}</p>
+                <p className="text-xs text-muted-foreground mt-1">Slug: {category.slug}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleEdit(category)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                এডিট
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => handleDelete(category.id)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                ডিলিট
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        {subcategories.length > 0 && (
+          <CardContent className="p-4 space-y-2">
+            <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <ChevronRight className="h-4 w-4" />
+              সাবক্যাটাগরি:
+            </p>
+            <div className="space-y-2">
+              {subcategories.map(renderSubcategory)}
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    );
   };
 
   return (
@@ -178,7 +290,9 @@ export default function AdminCategories() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">ক্যাটাগরি ম্যানেজমেন্ট</h1>
-            <p className="text-muted-foreground mt-2">ক্যাটাগরি যোগ, এডিট এবং ডিলিট করুন</p>
+            <p className="text-muted-foreground mt-2">
+              মোট {parentCategories.length} টি মূল ক্যাটাগরি, {categories.length - parentCategories.length} টি সাবক্যাটাগরি
+            </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -194,6 +308,31 @@ export default function AdminCategories() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                <div>
+                  <Label>প্যারেন্ট ক্যাটাগরি (ঐচ্ছিক)</Label>
+                  <Select 
+                    value={formData.parent_id} 
+                    onValueChange={(value) => setFormData({ ...formData, parent_id: value === 'none' ? '' : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="মূল ক্যাটাগরি হিসেবে তৈরি করুন" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">মূল ক্যাটাগরি (কোন প্যারেন্ট নেই)</SelectItem>
+                      {parentCategories
+                        .filter(c => c.id !== editingCategory?.id)
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name_bn} ({category.name_en})
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    সাবক্যাটাগরি তৈরি করতে একটি মূল ক্যাটাগরি নির্বাচন করুন
+                  </p>
+                </div>
                 <div>
                   <Label>নাম (ইংরেজি)</Label>
                   <Input
@@ -247,7 +386,7 @@ export default function AdminCategories() {
                     </p>
                   </div>
                 </div>
-                <Button onClick={handleSave} className="w-full" disabled={uploading}>
+                <Button onClick={handleSave} className="w-full" disabled={uploading || !formData.name_en || !formData.name_bn}>
                   {uploading ? 'আপলোড হচ্ছে...' : editingCategory ? 'আপডেট করুন' : 'সেভ করুন'}
                 </Button>
               </div>
@@ -255,49 +394,18 @@ export default function AdminCategories() {
           </Dialog>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <Card key={category.id}>
-              <CardHeader>
-                {category.image_url && (
-                  <img
-                    src={category.image_url}
-                    alt={category.name_bn}
-                    className="w-full h-32 object-cover rounded-lg mb-3"
-                  />
-                )}
-                <CardTitle className="text-lg">{category.name_bn}</CardTitle>
-                <p className="text-sm text-muted-foreground">{category.name_en}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleEdit(category)}
-                  >
-                    <Pencil className="h-4 w-4 mr-1" />
-                    এডিট
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    ডিলিট
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Categories Tree View */}
+        <div className="space-y-4">
+          {parentCategories.map(renderParentCategory)}
         </div>
 
         {loading && <p className="text-center">লোড হচ্ছে...</p>}
         {!loading && categories.length === 0 && (
-          <p className="text-center text-muted-foreground">কোন ক্যাটাগরি নেই</p>
+          <Card className="p-8 text-center">
+            <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">কোন ক্যাটাগরি নেই</p>
+            <p className="text-sm text-muted-foreground mt-1">উপরের বাটনে ক্লিক করে নতুন ক্যাটাগরি যোগ করুন</p>
+          </Card>
         )}
       </div>
     </AdminLayout>
