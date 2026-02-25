@@ -80,7 +80,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     try {
       // Fetch users from public.users table (contains email)
-      const { data: usersData, error: usersError } = await supabase
+      const { data: usersData, error: usersError } = await (supabase as any)
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
@@ -94,12 +94,12 @@ export default function AdminUsers() {
 
       if (profilesError) throw profilesError;
 
-      // Create profile lookup map
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      // Create profile lookup map by user_id
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
 
       // Get all user data with stats
       const usersWithData: UserData[] = await Promise.all(
-        (usersData || []).map(async (user) => {
+        (usersData || []).map(async (user: any) => {
           const profile = profileMap.get(user.id);
 
           // Get earnings
@@ -137,11 +137,11 @@ export default function AdminUsers() {
 
           return {
             id: user.id,
-            email: user.email,
-            full_name: profile?.full_name || user.full_name,
+            email: user.email || 'N/A',
+            full_name: profile?.full_name || user.full_name || null,
             phone: profile?.phone || null,
             address: profile?.address || null,
-            created_at: user.created_at,
+            created_at: user.created_at || null,
             totalEarnings,
             totalWithdrawals,
             ordersCount: ordersCount || 0,
