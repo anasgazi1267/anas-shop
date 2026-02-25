@@ -294,7 +294,9 @@ export type Database = {
           district_id: string | null
           division_id: string | null
           id: string
+          movedrop_order_id: string | null
           notes: string | null
+          order_source: string
           payment_method: string | null
           payment_number: string | null
           payment_screenshot: string | null
@@ -319,7 +321,9 @@ export type Database = {
           district_id?: string | null
           division_id?: string | null
           id?: string
+          movedrop_order_id?: string | null
           notes?: string | null
+          order_source?: string
           payment_method?: string | null
           payment_number?: string | null
           payment_screenshot?: string | null
@@ -344,7 +348,9 @@ export type Database = {
           district_id?: string | null
           division_id?: string | null
           id?: string
+          movedrop_order_id?: string | null
           notes?: string | null
+          order_source?: string
           payment_method?: string | null
           payment_number?: string | null
           payment_screenshot?: string | null
@@ -489,6 +495,7 @@ export type Database = {
           name_en: string
           original_price: number | null
           price: number
+          product_type: string
           sizes: string[] | null
           slug: string | null
           status: string | null
@@ -518,6 +525,7 @@ export type Database = {
           name_en: string
           original_price?: number | null
           price?: number
+          product_type?: string
           sizes?: string[] | null
           slug?: string | null
           status?: string | null
@@ -547,6 +555,7 @@ export type Database = {
           name_en?: string
           original_price?: number | null
           price?: number
+          product_type?: string
           sizes?: string[] | null
           slug?: string | null
           status?: string | null

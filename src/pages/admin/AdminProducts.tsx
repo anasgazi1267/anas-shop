@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, Package, Truck } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 
 interface Product {
   id: string;
@@ -33,6 +34,7 @@ interface Product {
   meta_keywords: string | null;
   category_id: string | null;
   affiliate_commission: number | null;
+  product_type: string;
 }
 
 interface Category {
@@ -49,6 +51,8 @@ export default function AdminProducts() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [filterType, setFilterType] = useState<string>('all');
 
   const [formData, setFormData] = useState({
     name_en: '',
@@ -69,6 +73,7 @@ export default function AdminProducts() {
     meta_keywords: '',
     category_id: '',
     affiliate_commission: 0,
+    product_type: 'own' as string,
   });
 
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
@@ -231,6 +236,7 @@ export default function AdminProducts() {
       meta_keywords: product.meta_keywords || '',
       category_id: product.category_id || '',
       affiliate_commission: product.affiliate_commission || 0,
+      product_type: product.product_type || 'own',
     });
     setDialogOpen(true);
   };
@@ -255,10 +261,15 @@ export default function AdminProducts() {
       meta_keywords: '',
       category_id: '',
       affiliate_commission: 0,
+      product_type: 'own',
     });
     setEditingProduct(null);
     setImageFiles(null);
   };
+
+  const filteredProducts = filterType === 'all' 
+    ? products 
+    : products.filter(p => (p.product_type || 'own') === filterType);
 
   // Get parent categories (no parent_id)
   const parentCategories = categories.filter(c => !c.parent_id);
@@ -272,6 +283,31 @@ export default function AdminProducts() {
           <div>
             <h1 className="text-3xl font-bold">প্রোডাক্ট ম্যানেজমেন্ট</h1>
             <p className="text-muted-foreground mt-2">প্রোডাক্ট যোগ, এডিট এবং ডিলিট করুন</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={filterType === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilterType('all')}
+            >
+              সব ({products.length})
+            </Button>
+            <Button
+              variant={filterType === 'own' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilterType('own')}
+            >
+              <Package className="h-4 w-4 mr-1" />
+              নিজের ({products.filter(p => (p.product_type || 'own') === 'own').length})
+            </Button>
+            <Button
+              variant={filterType === 'dropship' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilterType('dropship')}
+            >
+              <Truck className="h-4 w-4 mr-1" />
+              ড্রপশিপিং ({products.filter(p => p.product_type === 'dropship').length})
+            </Button>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -287,6 +323,27 @@ export default function AdminProducts() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                {/* Product Type */}
+                <div>
+                  <Label>প্রোডাক্ট টাইপ</Label>
+                  <Select
+                    value={formData.product_type}
+                    onValueChange={(value) => setFormData({ ...formData, product_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="own">🏠 নিজের প্রোডাক্ট</SelectItem>
+                      <SelectItem value="dropship">🚚 ড্রপশিপিং (MoveDrop)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {formData.product_type === 'dropship' 
+                      ? 'MoveDrop থেকে ফুলফিলমেন্ট হবে' 
+                      : 'নিজে ডেলিভারি করবেন'}
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>নাম (ইংরেজি)</Label>
@@ -532,10 +589,10 @@ export default function AdminProducts() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <Card key={product.id}>
               <CardHeader>
-                <div className="aspect-square overflow-hidden rounded-lg bg-muted mb-4">
+                <div className="aspect-square overflow-hidden rounded-lg bg-muted mb-4 relative">
                   {product.images[0] ? (
                     <img
                       src={product.images[0]}
@@ -547,6 +604,11 @@ export default function AdminProducts() {
                       <Upload className="h-16 w-16 text-muted-foreground" />
                     </div>
                   )}
+                  <Badge 
+                    className={`absolute top-2 left-2 ${(product.product_type || 'own') === 'dropship' ? 'bg-blue-500' : 'bg-green-500'}`}
+                  >
+                    {(product.product_type || 'own') === 'dropship' ? '🚚 ড্রপশিপ' : '🏠 নিজের'}
+                  </Badge>
                 </div>
                 <CardTitle className="text-lg">{product.name_bn}</CardTitle>
               </CardHeader>
