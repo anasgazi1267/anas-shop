@@ -363,6 +363,7 @@ export type Database = {
       }
       payment_methods: {
         Row: {
+          account_number: string | null
           created_at: string
           display_order: number | null
           id: string
@@ -372,6 +373,7 @@ export type Database = {
           name_bn: string | null
         }
         Insert: {
+          account_number?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
@@ -381,6 +383,7 @@ export type Database = {
           name_bn?: string | null
         }
         Update: {
+          account_number?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
@@ -394,6 +397,8 @@ export type Database = {
       product_requests: {
         Row: {
           created_at: string
+          customer_name: string | null
+          customer_phone: string | null
           description: string | null
           id: string
           image_url: string | null
@@ -403,6 +408,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -412,6 +419,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -739,6 +748,7 @@ export type Database = {
           id: string
           payment_method: string | null
           payment_number: string | null
+          processed_at: string | null
           status: string | null
           user_id: string
         }
@@ -750,6 +760,7 @@ export type Database = {
           id?: string
           payment_method?: string | null
           payment_number?: string | null
+          processed_at?: string | null
           status?: string | null
           user_id: string
         }
@@ -761,6 +772,7 @@ export type Database = {
           id?: string
           payment_method?: string | null
           payment_number?: string | null
+          processed_at?: string | null
           status?: string | null
           user_id?: string
         }
