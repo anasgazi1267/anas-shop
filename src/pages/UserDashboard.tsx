@@ -57,7 +57,7 @@ export default function UserDashboard() {
     setLoading(true);
     
     const [profileRes, ordersRes, divisionsRes, earningsRes, withdrawalsRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user!.id).maybeSingle(),
+      supabase.from('profiles').select('*').eq('user_id', user!.id).maybeSingle(),
       supabase.from('orders').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
       supabase.from('divisions').select('*').order('name_en'),
       supabase.from('affiliate_earnings').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
@@ -104,7 +104,7 @@ export default function UserDashboard() {
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: user!.id, ...updates });
+      .upsert({ user_id: user!.id, ...updates });
 
     if (error) {
       toast.error(t('Failed to update profile', 'প্রোফাইল আপডেট ব্যর্থ হয়েছে'));

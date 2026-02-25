@@ -481,6 +481,7 @@ export type Database = {
           original_price: number | null
           price: number
           sizes: string[] | null
+          slug: string | null
           status: string | null
           stock: number | null
           updated_at: string
@@ -509,6 +510,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           sizes?: string[] | null
+          slug?: string | null
           status?: string | null
           stock?: number | null
           updated_at?: string
@@ -537,6 +539,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           sizes?: string[] | null
+          slug?: string | null
           status?: string | null
           stock?: number | null
           updated_at?: string
@@ -555,6 +558,8 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          district_id: string | null
+          division_id: string | null
           full_name: string | null
           id: string
           phone: string | null
@@ -566,6 +571,8 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          district_id?: string | null
+          division_id?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -577,6 +584,8 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          district_id?: string | null
+          division_id?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -585,7 +594,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings: {
         Row: {
