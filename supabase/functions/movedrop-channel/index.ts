@@ -31,6 +31,25 @@ Deno.serve(async (req) => {
   const method = req.method
 
   try {
+    // ==================== HEALTH CHECK ====================
+    if ((path === '/' || path === '') && method === 'GET') {
+      return jsonResponse({
+        status: 'ok',
+        store: 'anas-shop',
+        version: '1.0',
+        endpoints: [
+          'GET /categories',
+          'GET /products',
+          'GET /products/:id',
+          'GET /orders',
+          'POST /orders',
+          'GET /orders/:id',
+          'PUT /orders/:id',
+          'POST /webhooks',
+        ]
+      })
+    }
+
     // ==================== CATEGORIES ====================
     if (path === '/categories' && method === 'GET') {
       const page = parseInt(url.searchParams.get('page') || '1')
