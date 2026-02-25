@@ -33,20 +33,28 @@ export default function TrackOrder() {
       return;
     }
 
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('tracking_id', trackingId.toUpperCase())
-      .single();
 
-    if (error || !data) {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('track-order', {
+        body: { tracking_id: trackingId },
+      });
+
+      if (error) throw error;
+
+      if (!data?.order) {
+        toast.error(t('Order not found', 'অর্ডার পাওয়া যায়নি'));
+        setOrder(null);
+      } else {
+        setOrder(data.order);
+      }
+    } catch (error) {
       toast.error(t('Order not found', 'অর্ডার পাওয়া যায়নি'));
       setOrder(null);
-    } else {
-      setOrder(data);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const getStatusIcon = (status: string) => {

@@ -14,9 +14,9 @@ import { Plus, Edit, Trash2, CreditCard, Upload } from 'lucide-react';
 interface PaymentMethod {
   id: string;
   name: string;
-  name_bn: string;
+  name_bn: string | null;
   logo_url: string | null;
-  account_number: string | null;
+  account_number?: string | null;
   is_active: boolean;
   display_order: number;
 }

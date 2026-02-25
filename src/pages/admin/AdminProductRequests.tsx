@@ -11,8 +11,8 @@ interface ProductRequest {
   id: string;
   product_name: string;
   description: string | null;
-  customer_name: string;
-  customer_phone: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   image_url: string | null;
   status: string;
   created_at: string;
@@ -114,11 +114,11 @@ export default function AdminProductRequests() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">গ্রাহকের নাম</p>
-                    <p className="font-semibold">{request.customer_name}</p>
+                    <p className="font-semibold">{request.customer_name || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">ফোন নাম্বার</p>
-                    <p className="font-semibold">{request.customer_phone}</p>
+                    <p className="font-semibold">{request.customer_phone || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">তারিখ</p>

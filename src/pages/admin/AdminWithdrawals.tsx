@@ -19,7 +19,7 @@ interface WithdrawalRequest {
   status: string;
   admin_note: string | null;
   created_at: string;
-  processed_at: string | null;
+  processed_at?: string | null;
   user_email?: string;
 }
 
