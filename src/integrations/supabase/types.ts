@@ -19,7 +19,9 @@ export type Database = {
           amount: number | null
           created_at: string
           id: string
+          is_referral_commission: boolean | null
           order_id: string | null
+          product_id: string | null
           status: string | null
           user_id: string
         }
@@ -27,7 +29,9 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: string
+          is_referral_commission?: boolean | null
           order_id?: string | null
+          product_id?: string | null
           status?: string | null
           user_id: string
         }
@@ -35,7 +39,9 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: string
+          is_referral_commission?: boolean | null
           order_id?: string | null
+          product_id?: string | null
           status?: string | null
           user_id?: string
         }
@@ -47,31 +53,38 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_earnings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       affiliate_links: {
         Row: {
           clicks: number | null
-          code: string
           created_at: string
           id: string
           product_id: string
+          referral_code: string
           user_id: string
         }
         Insert: {
           clicks?: number | null
-          code: string
           created_at?: string
           id?: string
           product_id: string
+          referral_code: string
           user_id: string
         }
         Update: {
           clicks?: number | null
-          code?: string
           created_at?: string
           id?: string
           product_id?: string
+          referral_code?: string
           user_id?: string
         }
         Relationships: [
@@ -87,30 +100,33 @@ export type Database = {
       banners: {
         Row: {
           created_at: string
+          display_order: number | null
           id: string
-          image: string
+          image_url: string
           is_active: boolean | null
           link: string | null
-          sort_order: number | null
-          title: string | null
+          title_bn: string | null
+          title_en: string | null
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          image: string
+          image_url: string
           is_active?: boolean | null
           link?: string | null
-          sort_order?: number | null
-          title?: string | null
+          title_bn?: string | null
+          title_en?: string | null
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          image?: string
+          image_url?: string
           is_active?: boolean | null
           link?: string | null
-          sort_order?: number | null
-          title?: string | null
+          title_bn?: string | null
+          title_en?: string | null
         }
         Relationships: []
       }
@@ -155,30 +171,33 @@ export type Database = {
       categories: {
         Row: {
           created_at: string
+          display_order: number | null
           id: string
-          image: string | null
-          name: string
+          image_url: string | null
           name_bn: string | null
+          name_en: string
           parent_id: string | null
-          sort_order: number | null
+          slug: string | null
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          image?: string | null
-          name: string
+          image_url?: string | null
           name_bn?: string | null
+          name_en: string
           parent_id?: string | null
-          sort_order?: number | null
+          slug?: string | null
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          image?: string | null
-          name?: string
+          image_url?: string | null
           name_bn?: string | null
+          name_en?: string
           parent_id?: string | null
-          sort_order?: number | null
+          slug?: string | null
         }
         Relationships: [
           {
@@ -218,20 +237,23 @@ export type Database = {
         Row: {
           division_id: string
           id: string
-          name: string
+          is_dhaka: boolean | null
           name_bn: string | null
+          name_en: string
         }
         Insert: {
           division_id: string
           id?: string
-          name: string
+          is_dhaka?: boolean | null
           name_bn?: string | null
+          name_en: string
         }
         Update: {
           division_id?: string
           id?: string
-          name?: string
+          is_dhaka?: boolean | null
           name_bn?: string | null
+          name_en?: string
         }
         Relationships: [
           {
@@ -246,23 +268,24 @@ export type Database = {
       divisions: {
         Row: {
           id: string
-          name: string
           name_bn: string | null
+          name_en: string
         }
         Insert: {
           id?: string
-          name: string
           name_bn?: string | null
+          name_en: string
         }
         Update: {
           id?: string
-          name?: string
           name_bn?: string | null
+          name_en?: string
         }
         Relationships: []
       }
       orders: {
         Row: {
+          advance_amount: number | null
           created_at: string
           customer_address: string
           customer_name: string
@@ -274,6 +297,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           payment_number: string | null
+          payment_screenshot: string | null
           product_ids: string[] | null
           product_quantities: Json | null
           product_sizes: Json | null
@@ -286,6 +310,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          advance_amount?: number | null
           created_at?: string
           customer_address: string
           customer_name: string
@@ -297,6 +322,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_number?: string | null
+          payment_screenshot?: string | null
           product_ids?: string[] | null
           product_quantities?: Json | null
           product_sizes?: Json | null
@@ -309,6 +335,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          advance_amount?: number | null
           created_at?: string
           customer_address?: string
           customer_name?: string
@@ -320,6 +347,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_number?: string | null
+          payment_screenshot?: string | null
           product_ids?: string[] | null
           product_quantities?: Json | null
           product_sizes?: Json | null
@@ -336,27 +364,30 @@ export type Database = {
       payment_methods: {
         Row: {
           created_at: string
+          display_order: number | null
           id: string
-          is_default: boolean | null
-          number: string
-          type: string
-          user_id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          name_bn: string | null
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          is_default?: boolean | null
-          number: string
-          type: string
-          user_id: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          name_bn?: string | null
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           id?: string
-          is_default?: boolean | null
-          number?: string
-          type?: string
-          user_id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          name_bn?: string | null
         }
         Relationships: []
       }
@@ -394,23 +425,26 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          ip_address: string | null
           product_id: string
+          user_agent: string | null
           user_id: string | null
+          user_ip: string | null
         }
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: string | null
           product_id: string
+          user_agent?: string | null
           user_id?: string | null
+          user_ip?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          ip_address?: string | null
           product_id?: string
+          user_agent?: string | null
           user_id?: string | null
+          user_ip?: string | null
         }
         Relationships: [
           {
@@ -424,19 +458,26 @@ export type Database = {
       }
       products: {
         Row: {
+          advance_amount: number | null
+          affiliate_commission: number | null
           category_id: string | null
           colors: string[] | null
           created_at: string
-          description: string | null
           description_bn: string | null
+          description_en: string | null
           discount_price: number | null
           id: string
           images: string[] | null
+          is_advance_payment: boolean | null
           is_bestseller: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
-          name: string
+          keywords: string[] | null
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
           name_bn: string | null
+          name_en: string
           original_price: number | null
           price: number
           sizes: string[] | null
@@ -445,19 +486,26 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advance_amount?: number | null
+          affiliate_commission?: number | null
           category_id?: string | null
           colors?: string[] | null
           created_at?: string
-          description?: string | null
           description_bn?: string | null
+          description_en?: string | null
           discount_price?: number | null
           id?: string
           images?: string[] | null
+          is_advance_payment?: boolean | null
           is_bestseller?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
-          name: string
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn?: string | null
+          name_en: string
           original_price?: number | null
           price?: number
           sizes?: string[] | null
@@ -466,19 +514,26 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advance_amount?: number | null
+          affiliate_commission?: number | null
           category_id?: string | null
           colors?: string[] | null
           created_at?: string
-          description?: string | null
           description_bn?: string | null
+          description_en?: string | null
           discount_price?: number | null
           id?: string
           images?: string[] | null
+          is_advance_payment?: boolean | null
           is_bestseller?: boolean | null
           is_featured?: boolean | null
           is_new?: boolean | null
-          name?: string
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn?: string | null
+          name_en?: string
           original_price?: number | null
           price?: number
           sizes?: string[] | null
@@ -653,6 +708,8 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
+          account_number: string | null
+          admin_note: string | null
           amount: number
           created_at: string
           id: string
@@ -662,6 +719,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_number?: string | null
+          admin_note?: string | null
           amount: number
           created_at?: string
           id?: string
@@ -671,6 +730,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_number?: string | null
+          admin_note?: string | null
           amount?: number
           created_at?: string
           id?: string
