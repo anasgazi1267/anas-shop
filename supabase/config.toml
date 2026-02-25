@@ -2,3 +2,6 @@ project_id = "qbasbsfvyczqylmqpwrv"
 
 [functions.track-order]
 verify_jwt = false
+
+[functions.movedrop-channel]
+verify_jwt = false
