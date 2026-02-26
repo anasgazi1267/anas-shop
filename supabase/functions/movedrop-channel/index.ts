@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // ==================== CATEGORIES ====================
     if (path === '/categories' && method === 'GET') {
       const page = parseInt(url.searchParams.get('page') || '1')
-      const perPage = parseInt(url.searchParams.get('per_page') || '10')
+      const perPage = parseInt(url.searchParams.get('per_page') || '100')
       const offset = (page - 1) * perPage
 
       const { data, error, count } = await supabase
@@ -64,13 +64,20 @@ Deno.serve(async (req) => {
 
       if (error) throw error
 
+      const categories = (data || []).map(c => ({
+        id: c.id,
+        name: c.name_en,
+        slug: c.slug || c.name_en.toLowerCase().replace(/\s+/g, '-'),
+        created_at: c.created_at,
+      }))
+
+      // Return flat array for simple clients, paginated for advanced
+      if (!url.searchParams.has('page')) {
+        return jsonResponse(categories)
+      }
+
       return jsonResponse({
-        data: (data || []).map(c => ({
-          id: c.id,
-          name: c.name_en,
-          slug: c.slug || c.name_en.toLowerCase().replace(/\s+/g, '-'),
-          created_at: c.created_at,
-        })),
+        data: categories,
         meta: {
           current_page: page,
           per_page: perPage,
