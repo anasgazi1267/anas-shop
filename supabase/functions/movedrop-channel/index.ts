@@ -30,6 +30,9 @@ Deno.serve(async (req) => {
   const path = url.pathname.split('/movedrop-channel')[1] || '/'
   const method = req.method
 
+  console.log(`[MoveDrop] ${method} ${path} | Full URL: ${req.url}`)
+  console.log(`[MoveDrop] Headers:`, JSON.stringify(Object.fromEntries(req.headers.entries())))
+
   try {
     // ==================== HEALTH CHECK ====================
     if ((path === '/' || path === '') && method === 'GET') {
