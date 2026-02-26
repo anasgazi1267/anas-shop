@@ -61,33 +61,32 @@ Deno.serve(async (req) => {
 
       const { data, error, count } = await supabase
         .from('categories')
-        .select('id, name_en, slug, created_at', { count: 'exact' })
+        .select('id, name_en, slug, image_url, parent_id, created_at', { count: 'exact' })
         .order('display_order')
         .range(offset, offset + perPage - 1)
 
       if (error) throw error
 
+      // WooCommerce-compatible format
       const categories = (data || []).map(c => ({
         id: c.id,
         name: c.name_en,
         slug: c.slug || c.name_en.toLowerCase().replace(/\s+/g, '-'),
-        created_at: c.created_at,
+        parent: c.parent_id || 0,
+        description: '',
+        display: 'default',
+        image: c.image_url ? { id: c.id, src: c.image_url, name: c.name_en, alt: c.name_en } : null,
+        menu_order: 0,
+        count: 0,
+        _links: {
+          self: [{ href: `${url.origin}${url.pathname}/${c.id}` }],
+          collection: [{ href: `${url.origin}${url.pathname}` }],
+        }
       }))
 
-      // Return flat array for simple clients, paginated for advanced
-      if (!url.searchParams.has('page')) {
-        return jsonResponse(categories)
-      }
+      console.log(`[MoveDrop] Categories response: ${JSON.stringify(categories).slice(0, 500)}`)
 
-      return jsonResponse({
-        data: categories,
-        meta: {
-          current_page: page,
-          per_page: perPage,
-          total: count || 0,
-          last_page: Math.ceil((count || 0) / perPage),
-        }
-      })
+      return jsonResponse(categories)
     }
 
     // ==================== PRODUCTS ====================
